@@ -1,0 +1,2865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARCHEO-IOT</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+  :root {
+    --cyan:   #00f2ff;
+    --green:  #00ff41;
+    --yellow: #ffea00;
+    --red:    #ff4060;
+    --orange: #ff9020;
+    --bg:     #050508;
+    --bg2:    #0c0c14;
+    --bg3:    #111118;
+    --border: #2a2a3a;
+    --dim:    #888;
+    --font:   'Share Tech Mono', monospace;
+    --head:   'Orbitron', monospace;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    width: 56px;
+    background: #05050a;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 0;
+    flex-shrink: 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    width: 36px; height: 36px;
+    border: 2px solid var(--yellow);
+    transform: rotate(45deg);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 24px;
+    box-shadow: 0 0 12px rgba(255,234,0,0.2);
+    flex-shrink: 0;
+  }
+  .logo span { transform: rotate(-45deg); font-size: 16px; }
+
+  .nav-btn {
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--dim);
+    border: none; background: none;
+    font-size: 18px;
+    transition: color 0.2s;
+    margin: 2px 0;
+    position: relative;
+  }
+  .nav-btn:hover { color: #666; }
+  .nav-btn.active { color: var(--cyan); }
+  .nav-btn.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--cyan);
+  }
+
+  /* ── MAIN ── */
+  #main {
+    margin-left: 56px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  #header {
+    height: 52px;
+    background: #05050a;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    flex-shrink: 0;
+  }
+
+  .header-title {
+    font-family: var(--head);
+    font-size: 12px;
+    letter-spacing: 0.25em;
+    color: var(--cyan);
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border: 1px solid;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .badge.online  { border-color: rgba(0,255,65,0.5);  background: rgba(0,255,65,0.1);  color: var(--green); }
+  .badge.offline { border-color: rgba(255,64,96,0.5);  background: rgba(255,64,96,0.1);  color: var(--red); }
+  .badge.warn    { border-color: rgba(255,234,0,0.5); background: rgba(255,234,0,0.1); color: var(--yellow); }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+  .dot.green  { background: var(--green); }
+  .dot.red    { background: var(--red); }
+  .dot.pulse  { animation: pulse 1.5s infinite; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .hdr-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    background: none;
+    color: #aaa;
+    font-family: var(--font);
+    font-size: 10px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .hdr-btn:hover { color: var(--green); border-color: rgba(0,255,65,0.4); }
+  .hdr-btn.danger { border-color: rgba(255,64,96,0.4); color: var(--red); }
+  .hdr-btn.danger:hover { background: rgba(255,64,96,0.12); }
+
+  /* ── CONTENT ── */
+  #content { flex: 1; overflow-y: auto; }
+
+  .page { display: none; padding: 20px; }
+  .page.active { display: block; }
+
+  /* ── CARDS GRID ── */
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
+
+  @media(max-width:900px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  @media(max-width:600px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+  }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 16px;
+  }
+
+  .card-title {
+    font-family: var(--head);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: #aaa;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .icon { font-size: 13px; }
+
+  /* ── SENSOR CARDS ── */
+  .sensor-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .sensor-card:hover { border-color: rgba(0,242,255,0.2); }
+
+  .sensor-label {
+    font-size: 11px;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+
+  .sensor-value {
+    font-family: var(--head);
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .sensor-unit {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .sensor-bar {
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 2px;
+    width: 0%;
+    transition: width 1s ease;
+  }
+
+  /* ── CHART ── */
+  .chart-wrap {
+    position: relative;
+    height: 220px;
+  }
+
+  /* ── RELAY BUTTONS ── */
+  .relay-btn {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    background: none;
+    color: #aaa;
+    font-family: var(--font);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.2s;
+    margin-bottom: 6px;
+  }
+  .relay-btn:hover:not(:disabled) { color: #ddd; }
+  .relay-btn.on {
+    border-color: rgba(0,255,65,0.5);
+    background: rgba(0,255,65,0.1);
+    color: var(--green);
+  }
+  .relay-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* ── TOGGLE ── */
+  .toggle {
+    width: 32px; height: 16px;
+    background: var(--border);
+    border-radius: 8px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--green); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 12px; height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    top: 2px; left: 2px;
+    transition: transform 0.2s;
+  }
+  .toggle.on::after { transform: translateX(16px); }
+
+  /* ── PROTOCOL BUTTONS ── */
+  .proto-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .proto-btn {
+    padding: 8px 6px;
+    border: 1px solid var(--border);
+    background: none;
+    color: #888;
+    font-family: var(--font);
+    font-size: 10px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── PHASE TRACKER ── */
+  .phase-track {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 12px;
+  }
+  .phase-item { flex: 1; }
+  .phase-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;    
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .phase-bar-bg {
+    height: 4px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .phase-bar-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 1s ease;
+  }
+  .phase-arrow {
+    color: var(--border);
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  /* ── PLATEAU ── */
+  .plateau-box {
+    border: 1px dashed rgba(255,234,0,0.2);
+    background: rgba(0,0,0,0.3);
+    padding: 12px;
+    margin-top: 12px;
+  }
+  .plateau-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    margin-bottom: 6px;
+    color: #aaa;
+    text-transform: uppercase;
+  }
+  .plateau-progress {
+    height: 4px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .plateau-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 1s ease;
+    background: var(--yellow);
+    box-shadow: 0 0 6px var(--yellow);
+  }
+
+  /* ── PREDICTION ── */
+  .pred-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  @media(max-width:600px){ .pred-grid { grid-template-columns: 1fr 1fr; } }
+
+  .pred-item {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .pred-label { font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .pred-value { font-family: var(--head); font-size: 18px; font-weight: 900; }
+  .pred-unit  { font-size: 9px; color: #888; text-transform: uppercase; }
+  .pred-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 1px; opacity: 0.4; }
+
+  /* ── ARTIFACT CARDS ── */
+  .artifact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .artifact-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: border-color 0.2s;
+    overflow: hidden;
+  }
+  .artifact-card:hover { border-color: rgba(0,242,255,0.3); }
+
+  .artifact-emoji {
+    height: 100px;
+    background: var(--bg3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    transition: transform 0.3s;
+  }
+  .artifact-card:hover .artifact-emoji { transform: scale(1.1); }
+
+  .artifact-info { padding: 10px; }
+  .artifact-id { font-size: 10px; font-weight: bold; letter-spacing: 0.15em; }
+  .artifact-name { font-size: 11px; color: #fff; font-weight: bold; text-transform: uppercase; margin: 3px 0; }
+  .artifact-meta { font-size: 9px; color: #888; display: flex; justify-content: space-between; }
+
+  /* ── DISCOVERY HEADER ── */
+  .disc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .page-title {
+    font-family: var(--head);
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-btn {
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    background: none;
+    color: #888;
+    font-family: var(--font);
+    font-size: 10px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-btn:hover { color: #fff; }
+  .filter-btn.active { background: var(--cyan); color: #000; border-color: var(--cyan); }
+
+  .search-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    color: #fff;
+    font-family: var(--font);
+    font-size: 11px;
+    outline: none;
+    width: 160px;
+    transition: border-color 0.2s;
+  }
+  .search-box:focus { border-color: var(--cyan); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid;
+    background: none;
+    font-family: var(--font);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+  }
+  .btn-green { border-color: rgba(0,255,65,0.5); color: var(--green); }
+  .btn-green:hover { background: var(--green); color: #000; }
+  .btn-cyan  { border-color: rgba(0,242,255,0.5); color: var(--cyan); }
+  .btn-cyan:hover  { background: var(--cyan);  color: #000; }
+  .btn-yellow{ border-color: rgba(255,234,0,0.5);color: var(--yellow);}
+  .btn-yellow:hover{ background: var(--yellow); color: #000; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--bg2);
+    border: 1px solid rgba(0,242,255,0.2);
+    max-width: 560px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+  }
+  .modal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--cyan), transparent);
+  }
+
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-title { font-family: var(--head); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; }
+  .modal-close {
+    background: none; border: none; color: var(--dim);
+    cursor: pointer; font-size: 18px;
+    transition: color 0.2s;
+  }
+  .modal-close:hover { color: #fff; }
+  .modal-body { padding: 20px; }
+
+  /* ── FORM ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media(max-width:500px){ .form-grid { grid-template-columns: 1fr; } }
+
+  .form-group { margin-bottom: 4px; }
+  .form-label {
+    display: block;
+    font-size: 10px;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 5px;
+  }
+  .form-input {
+    width: 100%;
+    background: #000;
+    border: 1px solid var(--border);
+    color: #fff;
+    font-family: var(--font);
+    font-size: 11px;
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--cyan); }
+
+  /* ── EMOJI PICKER ── */
+  .emoji-pick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .emoji-opt {
+    width: 34px; height: 34px;
+    border: 1px solid var(--border);
+    background: none;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.2s;
+  }
+  .emoji-opt.selected { border-color: var(--cyan); background: rgba(0,242,255,0.08); }
+
+  /* ── TABLE ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    font-family: var(--font);
+  }
+  .data-table th {
+    text-align: left;
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--border);
+    color: #aaa;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+  .data-table th.right { text-align: right; }
+  .data-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #1a1a24;
+    transition: background 0.1s;
+  }
+  .data-table tr:hover td { background: var(--border); }
+  .data-table td.right { text-align: right; }
+
+  /* ── MAP SVG ── */
+  #map-svg { width: 100%; height: auto; cursor: crosshair; }
+
+  /* ── ARCHIVE ── */
+  .arc-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .arc-item:hover { border-color: rgba(0,255,65,0.35); }
+  .arc-stripe {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+  .arc-emoji { font-size: 28px; flex-shrink: 0; }
+  .arc-info  { flex: 1; min-width: 0; }
+  .arc-id    { font-size: 10px; font-weight: bold; letter-spacing: 0.15em; }
+  .arc-name  { font-size: 13px; font-weight: bold; color: #fff; text-transform: uppercase; margin: 2px 0; }
+  .arc-meta  { font-size: 10px; color: #888; }
+  .arc-tds   { text-align: right; flex-shrink: 0; }
+  .arc-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 9px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border: 1px solid;
+    margin-left: 8px;
+  }
+
+  /* ── NODE STATUS ── */
+  .node-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media(max-width:600px){ .node-grid { grid-template-columns: 1fr; } }
+
+  .node-card {
+    border: 1px solid var(--border);
+    padding: 14px;
+    transition: border-color 0.2s;
+  }
+  .node-card.online { border-color: rgba(0,255,65,0.3); }
+  .node-card.offline { border-color: rgba(255,64,96,0.3); }
+
+  .node-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .node-id   { font-size: 10px; font-weight: bold; letter-spacing: 0.15em; color: var(--cyan); }
+  .node-status-badge {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 9px; font-weight: bold; text-transform: uppercase;
+  }
+  .node-name { font-size: 12px; font-weight: bold; color: #fff; margin-bottom: 6px; }
+  .node-detail { font-size: 10px; color: #888; line-height: 1.7; }
+
+  /* ── SETTINGS MATRIX ── */
+  .matrix-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .matrix-table th { padding: 8px 10px; border-bottom: 1px solid var(--border); color: #aaa; text-transform: uppercase; font-size: 9px; letter-spacing: 0.1em; text-align: left; }
+  .matrix-table th.center { text-align: center; }
+  .matrix-table td { padding: 8px 10px; border-bottom: 1px solid #1a1a24; }
+  .matrix-table td.center { text-align: center; }
+
+  /* ── FOOTER ── */
+  #footer {
+    height: 34px;
+    background: #05050a;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    flex-shrink: 0;
+  }
+  .footer-dots { display: flex; gap: 16px; }
+  .footer-dot-item { display: flex; align-items: center; gap: 5px; }
+
+  /* ── OFFLINE BANNER ── */
+  .offline-banner {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,64,96,0.08);
+    border: 1px solid rgba(255,64,96,0.35);
+    padding: 12px 16px;
+    margin-bottom: 14px;
+  }
+  .offline-banner.show { display: flex; }
+  .offline-banner-text { flex: 1; }
+  .offline-banner-title { font-size: 11px; color: var(--red); font-weight: bold; text-transform: uppercase; }
+  .offline-banner-sub   { font-size: 10px; color: #888; margin-top: 2px; }
+
+  /* ── LORA STRIP ── */
+  .lora-strip {
+    display: none;
+    align-items: center;
+    gap: 16px;
+    background: rgba(0,242,255,0.06);
+    border: 1px solid rgba(0,242,255,0.2);
+    padding: 10px 16px;
+    margin-bottom: 14px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--cyan);
+  }
+  .lora-strip.show { display: flex; }
+  .lora-val { color: #fff; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* ── LOGIN ── */
+  #login-screen {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, #0a0a14 0%, #030303 70%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    padding: 16px;
+  }
+  .login-box {
+    border: 1px solid rgba(0,242,255,0.2);
+    background: #050508;
+    padding: 40px;
+    max-width: 400px;
+    width: 100%;
+    position: relative;
+  }
+  .login-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--cyan), transparent);
+  }
+  .login-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 32px;
+  }
+  .login-diamond {
+    width: 56px; height: 56px;
+    border: 2px solid var(--cyan);
+    transform: rotate(45deg);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+    box-shadow: 0 0 20px rgba(0,242,255,0.2);
+  }
+  .login-diamond span { transform: rotate(-45deg); font-size: 22px; }
+  .login-title {
+    font-family: var(--head);
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+  .login-sub {
+    font-size: 11px;
+    color: var(--cyan);
+    opacity: 0.85;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    margin-top: 6px;
+  }
+  .login-field { margin-bottom: 16px; }
+  .login-label {
+    display: block;
+    font-size: 10px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    margin-bottom: 6px;
+    font-weight: bold;
+  }
+  .login-input {
+    width: 100%;
+    background: #050508;
+    border: 1px solid #2a2a3a;
+    color: var(--cyan);
+    font-family: var(--font);
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .login-input:focus { border-color: var(--cyan); }
+  .login-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--cyan);
+    border: none;
+    color: #000;
+    font-family: var(--head);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 8px;
+  }
+  .login-btn:hover { background: #fff; }
+
+  /* ── COMMENT ── */
+  .comment-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    margin-bottom: 6px;
+  }
+  .comment-user { font-size: 10px; color: var(--cyan); margin-bottom: 3px; font-weight: bold; }
+  .comment-text { font-size: 11px; color: #aaa; }
+
+  .comment-input-row { display: flex; gap: 6px; margin-top: 10px; }
+  .comment-input {
+    flex: 1;
+    background: #000;
+    border: 1px solid var(--border);
+    color: #fff;
+    font-family: var(--font);
+    font-size: 10px;
+    padding: 7px 10px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .comment-input:focus { border-color: var(--cyan); }
+  .comment-send {
+    background: var(--cyan);
+    border: none;
+    color: #000;
+    padding: 7px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    transition: background 0.2s;
+  }
+  .comment-send:hover { background: #fff; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-diamond"><span>💧</span></div>
+      <div class="login-title">Archeo-IoT</div>
+      <div class="login-sub">Security Protocol Alpha-9</div>
+    </div>
+    <div class="login-field">
+      <label class="login-label">Operator Identifier</label>
+      <input class="login-input" id="login-id" type="text" placeholder="USER_ID"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-field">
+      <label class="login-label">Access Hash</label>
+      <input class="login-input" id="login-pw" type="password" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div id="login-error" style="display:none;color:var(--red);font-size:11px;text-align:center;margin-bottom:10px;padding:8px;border:1px solid rgba(255,64,96,0.3);background:rgba(255,64,96,0.08)">⚠ Wrong username or password</div>
+    <button class="login-btn" onclick="doLogin()">🔐 Authorize</button>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="logo"><span>💧</span></div>
+  <button class="nav-btn active" onclick="showPage('dashboard')" title="Terminal">📊</button>
+  <button class="nav-btn" onclick="showPage('discovery')"  title="Archive">🗄️</button>
+  <button class="nav-btn" onclick="showPage('archive')"    title="History">📜</button>
+  <button class="nav-btn" onclick="showPage('reports')"    title="Reports">📋</button>
+  <button class="nav-btn" onclick="showPage('map')"        title="Map">🗺️</button>
+  <button class="nav-btn" onclick="showPage('settings')"   title="Config">⚙️</button>
+  <div style="flex:1"></div>
+  <button class="nav-btn" onclick="doLogout()" title="Logout" style="color:var(--red)">🚪</button>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div class="header-title" id="header-title">ARCHEO-IOT // TERMINAL</div>
+    <div class="header-right">
+      <div class="badge offline" id="esp-badge">
+        <span class="dot red" id="esp-dot"></span>
+        <span id="esp-label">ESP OFFLINE</span>
+      </div>
+      <button class="hdr-btn" onclick="exportCSV()" id="btn-csv">⬇ CSV</button>
+      <button class="hdr-btn danger" onclick="emergencyStop()" id="btn-emergency">⛔ EMERGENCY STOP</button>
+      <button class="hdr-btn" onclick="toggleLang()" id="lang-btn" style="border-color:rgba(255,234,0,0.4);color:var(--yellow);font-weight:bold;letter-spacing:0.15em">🌐 БГ</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="offline-banner" id="offline-banner">
+        <span style="font-size:20px">📡</span>
+        <div class="offline-banner-text">
+          <div class="offline-banner-title">ESP offline — no sensor data</div>
+          <div class="offline-banner-sub" id="ws-url-label">ws://192.168.1.101:81 — reconnect на всеки 5 сек</div>
+        </div>
+      </div>
+
+      <!-- Phase Tracker -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title"><span class="icon">⚡</span> Process Phase
+          <div style="margin-left:auto">
+            <span id="phase-badge" style="font-size:8px;font-weight:bold;padding:3px 10px;border:1px solid rgba(0,242,255,0.3);color:var(--cyan);background:rgba(0,242,255,0.05);text-transform:uppercase">SOAKING</span>
+          </div>
+        </div>
+        <div class="phase-track">
+          <div class="phase-item">
+            <div class="phase-label"><span id="ph0-lbl" style="color:#888">Soaking</span><span id="ph0-pct" style="color:var(--cyan)"></span></div>
+            <div class="phase-bar-bg"><div class="phase-bar-fill" id="ph0-bar" style="background:var(--cyan)"></div></div>
+          </div>
+          <div class="phase-arrow">›</div>
+          <div class="phase-item">
+            <div class="phase-label"><span id="ph1-lbl" style="color:#333">Active</span><span id="ph1-pct" style="color:var(--yellow)"></span></div>
+            <div class="phase-bar-bg"><div class="phase-bar-fill" id="ph1-bar" style="background:var(--yellow)"></div></div>
+          </div>
+          <div class="phase-arrow">›</div>
+          <div class="phase-item">
+            <div class="phase-label"><span id="ph2-lbl" style="color:#333">Plateau</span><span id="ph2-pct" style="color:var(--orange)"></span></div>
+            <div class="phase-bar-bg"><div class="phase-bar-fill" id="ph2-bar" style="background:var(--orange)"></div></div>
+          </div>
+          <div class="phase-arrow">›</div>
+          <div class="phase-item">
+            <div class="phase-label"><span id="ph3-lbl" style="color:#333">Finalizing</span></div>
+            <div class="phase-bar-bg"><div class="phase-bar-fill" id="ph3-bar" style="background:var(--green)"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prediction -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title"><span class="icon">📉</span> Prediction
+          <div style="margin-left:auto" id="pred-conf-badge"></div>
+        </div>
+        <div id="pred-content">
+          <div style="font-size:10px;color:var(--dim);font-style:italic">Insufficient data for prediction</div>
+        </div>
+      </div>
+
+      <!-- Sensor Cards -->
+      <div class="grid-4">
+        <div class="sensor-card">
+          <div class="sensor-label">Salinity (TDS)</div>
+          <div class="sensor-value" id="val-tds" style="color:var(--cyan)">—</div>
+          <div class="sensor-unit">ppt</div>
+          <div class="sensor-bar" id="bar-tds" style="background:var(--cyan)"></div>
+        </div>
+        <div class="sensor-card">
+          <div class="sensor-label">Conductivity (EC)</div>
+          <div class="sensor-value" id="val-ec" style="color:var(--green)">—</div>
+          <div class="sensor-unit">mS/cm</div>
+          <div class="sensor-bar" id="bar-ec" style="background:var(--green)"></div>
+        </div>
+        <div class="sensor-card">
+          <div class="sensor-label">Temperature</div>
+          <div class="sensor-value" id="val-temp" style="color:var(--yellow)">—</div>
+          <div class="sensor-unit">°C</div>
+          <div class="sensor-bar" id="bar-temp" style="background:var(--yellow)"></div>
+        </div>
+        <div class="sensor-card">
+          <div class="sensor-label">Water Level</div>
+          <div class="sensor-value" id="val-wl" style="color:var(--red)">—</div>
+          <div class="sensor-unit">%</div>
+          <div class="sensor-bar" id="bar-wl" style="background:var(--red)"></div>
+        </div>
+      </div>
+
+      <!-- Chart + Control -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><span class="icon">📈</span> Динамика на обезсоляването</div>
+          <div class="chart-wrap">
+            <canvas id="tds-chart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="icon">🔧</span> Хардуерен контрол</div>
+
+          <!-- Auto Mode -->
+          <div id="auto-box" style="border:1px solid var(--border);padding:10px 12px;margin-bottom:10px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:12px">🤖</span>
+                <span style="font-size:8px;font-weight:bold;text-transform:uppercase;color:var(--dim)" id="auto-label">Авто Режим</span>
+              </div>
+              <div class="toggle" id="auto-toggle" onclick="toggleAuto()"></div>
+            </div>
+            <div id="auto-desc" style="display:none;font-size:7px;color:rgba(0,242,255,0.4);margin-top:5px;font-style:italic">
+              Системата автоматично управлява клапаните спрямо TDS
+            </div>
+          </div>
+
+          <div id="relay-panel">
+            <button class="relay-btn" id="r1-btn" onclick="toggleRelay('r1')">
+              <span>💧 Дренажна помпа</span>
+              <div class="toggle" id="r1-tog"></div>
+            </button>
+            <button class="relay-btn" id="r2-btn" onclick="toggleRelay('r2')">
+              <span>🌊 Клапан морска вода</span>
+              <div class="toggle" id="r2-tog"></div>
+            </button>
+            <button class="relay-btn" id="r3-btn" onclick="toggleRelay('r3')">
+              <span>🔄 Клапан чешмяна вода</span>
+              <div class="toggle" id="r3-tog"></div>
+            </button>
+          </div>
+
+          <div style="margin-top:10px">
+            <div style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;font-weight:bold">Активен протокол</div>
+            <div class="proto-grid">
+              <button class="proto-btn" id="proto-GLASS"   onclick="setMode('GLASS')">🔷 Стъкло</button>
+              <button class="proto-btn" id="proto-CERAMIC" onclick="setMode('CERAMIC')">🏺 Керамика</button>
+              <button class="proto-btn" id="proto-STONE"   onclick="setMode('STONE')">🪨 Камък</button>
+              <button class="proto-btn" id="proto-METAL"   onclick="setMode('METAL')">⚔️ Метал</button>
+            </div>
+          </div>
+
+          <div class="plateau-box">
+            <div class="plateau-label">
+              <span>Анализ на плато</span>
+              <span id="plateau-val" style="color:var(--yellow);font-weight:bold">0%</span>
+            </div>
+            <div class="plateau-progress">
+              <div class="plateau-fill" id="plateau-fill"></div>
+            </div>
+            <div style="font-size:8px;color:var(--dim);margin-top:6px" id="plateau-target">Цел: 8 ppt // Δ &lt; 1% за 21 дни</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Node Status -->
+      <div class="card">
+        <div class="card-title"><span class="icon">📡</span> Статус на Нода</div>
+        <div class="node-grid">
+          <div class="node-card" id="node-esp01">
+            <div class="node-top">
+              <div class="node-id">ESP-01</div>
+              <div class="node-status-badge">
+                <div class="dot red" id="node-dot"></div>
+                <span id="node-status-text" style="color:var(--red)">OFFLINE</span>
+              </div>
+            </div>
+            <div class="node-name">Primary Tank</div>
+            <div class="node-detail" id="node-detail">
+              IP: 192.168.1.101<br>
+              FW: v1.0<br>
+              Mode: <span id="node-mode" style="color:var(--yellow)">CERAMIC</span>
+            </div>
+          </div>
+          <div class="node-card" style="border-color:rgba(0,242,255,0.1)">
+            <div class="node-top">
+              <div class="node-id" style="color:var(--green)">SYS</div>
+              <div class="node-status-badge">
+                <div class="dot green pulse"></div>
+                <span style="color:var(--green)">ACTIVE</span>
+              </div>
+            </div>
+            <div class="node-name">Dashboard</div>
+            <div class="node-detail" id="sys-detail">
+              Данни: <span id="data-count">0</span> точки<br>
+              Сесия: <span id="session-time">—</span><br>
+              Версия: v1.0
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ DISCOVERY ══ -->
+    <div class="page" id="page-discovery">
+      <div class="disc-header">
+        <div class="page-title" style="color:var(--cyan)">Дигитален Архив</div>
+        <div class="filter-row">
+          <button class="btn btn-green" onclick="openAddArtifact()">+ Нов артефакт</button>
+          <input class="search-box" id="art-search" placeholder="Търси..." oninput="renderArtifacts()">
+          <button class="filter-btn active" id="f-ALL"     onclick="setFilter('ALL')">ALL</button>
+          <button class="filter-btn" id="f-GLASS"   onclick="setFilter('GLASS')">Стъкло</button>
+          <button class="filter-btn" id="f-CERAMIC" onclick="setFilter('CERAMIC')">Керамика</button>
+          <button class="filter-btn" id="f-STONE"   onclick="setFilter('STONE')">Камък</button>
+          <button class="filter-btn" id="f-METAL"   onclick="setFilter('METAL')">Метал</button>
+        </div>
+      </div>
+      <div class="artifact-grid" id="artifact-grid"></div>
+    </div>
+
+    <!-- ══ ARCHIVE ══ -->
+    <div class="page" id="page-archive">
+      <div class="disc-header">
+        <div class="page-title" style="color:var(--green)">Архив на Завършени Проекти</div>
+      </div>
+      <div id="archive-list"></div>
+      <div class="grid-4" style="margin-top:16px" id="archive-stats"></div>
+    </div>
+
+    <!-- ══ REPORTS ══ -->
+    <div class="page" id="page-reports">
+      <div class="disc-header">
+        <div class="page-title" style="color:var(--yellow)">Система за Доклади</div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title"><span class="icon">⚡</span> Live Сензорен Журнал</div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Час</th>
+                <th class="right">TDS (ppt)</th>
+                <th class="right">EC (mS/cm)</th>
+                <th class="right">Temp (°C)</th>
+                <th class="right">Ниво (%)</th>
+              </tr>
+            </thead>
+            <tbody id="report-table"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">📦</span> Доклади по Артефакт</div>
+        <div id="report-artifacts"></div>
+      </div>
+    </div>
+
+    <!-- ══ MAP ══ -->
+    <div class="page" id="page-map">
+      <div class="disc-header">
+        <div class="page-title" style="color:var(--cyan)">Сонарна Карта</div>
+        <div id="map-count" style="font-size:9px;color:var(--dim)"></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <svg id="map-svg" viewBox="0 0 760 480"></svg>
+        </div>
+        <div style="max-height:480px;overflow-y:auto" id="map-list"></div>
+      </div>
+    </div>
+
+    <!-- ══ SETTINGS ══ -->
+    <div class="page" id="page-settings">
+      <div class="disc-header">
+        <div class="page-title" style="color:var(--green)">Конфигурация</div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title"><span class="icon">📡</span> ESP Връзка</div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label class="form-label">WebSocket адрес</label>
+          <div style="display:flex;gap:8px">
+            <input class="form-input" id="ws-input" value="ws://192.168.1.101:81" style="flex:1">
+            <button class="btn btn-cyan" onclick="reconnectWS()">🔄 Свържи</button>
+          </div>
+        </div>
+        <div class="grid-4">
+          <div style="background:var(--bg3);border:1px solid var(--border);padding:10px">
+            <div style="font-size:7px;color:var(--dim);text-transform:uppercase;margin-bottom:4px">Статус</div>
+            <div style="font-size:10px;font-weight:bold" id="set-status">ОФЛАЙН</div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);padding:10px">
+            <div style="font-size:7px;color:var(--dim);text-transform:uppercase;margin-bottom:4px">Данни</div>
+            <div style="font-size:10px;font-weight:bold;color:var(--cyan)" id="set-datacount">0</div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);padding:10px">
+            <div style="font-size:7px;color:var(--dim);text-transform:uppercase;margin-bottom:4px">Интервал</div>
+            <div style="font-size:10px;font-weight:bold;color:var(--green)">3 сек</div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);padding:10px">
+            <div style="font-size:7px;color:var(--dim);text-transform:uppercase;margin-bottom:4px">Reconnect</div>
+            <div style="font-size:10px;font-weight:bold;color:var(--yellow)">5 сек</div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title"><span class="icon">🧪</span> Матрица на Материалите</div>
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>Материал</th>
+              <th class="center">Микс</th>
+              <th class="center">Цел TDS</th>
+              <th class="center">Цикъл</th>
+              <th class="center">Статус</th>
+            </tr>
+          </thead>
+          <tbody id="matrix-table"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">ℹ️</span> System Info</div>
+        <div class="grid-4" id="sys-info"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div id="footer">
+    <div class="footer-dots">
+      <div class="footer-dot-item"><div class="dot" id="foot-esp" style="background:var(--red)"></div><span>ESP-01</span></div>
+      <div class="footer-dot-item"><div class="dot" id="foot-data" style="background:var(--red)"></div><span>DATA</span></div>
+    </div>
+    <div style="color:rgba(0,242,255,0.2)" id="footer-coords">43.2046°N 27.9105°E // --:--:--</div>
+  </div>
+</div>
+
+<!-- ARTIFACT MODAL -->
+<div class="modal-overlay" id="art-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="art-modal-title">Артефакт</div>
+      <button class="modal-close" onclick="closeModal('art-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="art-modal-body"></div>
+  </div>
+</div>
+
+<!-- ADD ARTIFACT MODAL -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="add-modal-title">+ Нов Артефакт</div>
+      <button class="modal-close" onclick="closeModal('add-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:12px">
+        <div class="form-label">Снимка</div>
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px">
+          <div id="photo-preview" style="width:80px;height:80px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:40px;flex-shrink:0;overflow:hidden;"></div>
+          <div style="flex:1">
+            <label for="f-photo" style="display:block;padding:10px;border:1px dashed var(--border);background:var(--bg3);color:#aaa;font-family:var(--font);font-size:10px;text-transform:uppercase;text-align:center;cursor:pointer;transition:border-color 0.2s" onmouseover="this.style.borderColor='var(--cyan)'" onmouseout="this.style.borderColor='var(--border)'">
+              📷 Избери снимка
+            </label>
+            <input type="file" id="f-photo" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+            <div style="font-size:9px;color:#666;margin-top:4px">JPG, PNG до 2MB — или избери икона по-долу</div>
+          </div>
+        </div>
+        <div class="form-label" style="margin-top:8px">Икона (ако няма снимка)</div>
+        <div class="emoji-pick" id="emoji-pick"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">ID</label>
+          <input class="form-input" id="f-id" placeholder="A-103">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Наименование</label>
+          <input class="form-input" id="f-name" placeholder="Керамична Купа">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Материал</label>
+          <input class="form-input" id="f-mat" placeholder="Глина">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Откривател</label>
+          <input class="form-input" id="f-disc" placeholder="Dr. Petrov">
+        </div>
+        <div class="form-group">
+          <label class="form-label">GPS</label>
+          <input class="form-input" id="f-gps" placeholder="43.2046°N 27.9105°E">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Дата</label>
+          <input class="form-input" id="f-date" type="date">
+        </div>
+      </div>
+      <div style="margin:12px 0">
+        <div class="form-label">Протокол</div>
+        <div class="proto-grid" id="add-proto-grid"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-green" onclick="saveArtifact()" id="save-art-btn">✓ Добави артефакт</button>
+        <button class="btn" style="border-color:var(--border);color:var(--dim)" onclick="closeModal('add-modal')">Откажи</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ARCHIVE DETAIL MODAL -->
+<div class="modal-overlay" id="arc-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="arc-modal-title"></div>
+      <button class="modal-close" onclick="closeModal('arc-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="arc-modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG — СМЕНИ ТЕЗИ ДВА РЕДА ────────────────────────────────────────────
+const ESP_WS_DEFAULT = 'ws://192.168.1.101:81';
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MODES = {
+  GLASS:   { name:'Стъкло',   mix:'25%:75%',      target:12, cycle:21, color:'#00f2ff', icon:'🔷' },
+  CERAMIC: { name:'Керамика', mix:'50%:50%',      target:8,  cycle:14, color:'#ffea00', icon:'🏺' },
+  STONE:   { name:'Камък',    mix:'75%:25%',      target:4,  cycle:7,  color:'#00ff41', icon:'🪨' },
+  METAL:   { name:'Метал',    mix:'100%:0%+NaOH', target:1,  cycle:2,  color:'#ff003c', icon:'⚔️' },
+};
+
+const EMOJIS = ['🏺','🧭','🏛️','⚔️','🔮','📜','💎','🗡️','🛡️','⚗️','🔱','🪙','🗿','🧱'];
+
+// ─── SUPABASE ─────────────────────────────────────────────────────────────────
+const SUPABASE_URL  = 'https://pbknxnckgeynczqssiwa.supabase.co';
+const SUPABASE_KEY  = 'sb_publishable_kRxBlciysxugngWUBGdNlg_iUKfzoNT';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const DEFAULT_ARTIFACTS = [
+  { id:'A-102', name:'Керамичен Питос',    mat:'Глина',   date:'2024-03-20', gps:'43.2046°N 27.9105°E', discoverer:'Dr. Ivanova',  img:'🏺', photo:null, mode:'CERAMIC', likes:14, comments:[{user:'Prof. Kolev',text:'Отличен образец.'}] },
+  { id:'B-054', name:'Римски Секстант',    mat:'Бронз',   date:'2024-03-21', gps:'43.2051°N 27.9112°E', discoverer:'Dr. Petrov',   img:'🧭', photo:null, mode:'METAL',   likes:22, comments:[] },
+  { id:'C-221', name:'Амфора - Фрагмент', mat:'Керамика',date:'2024-03-19', gps:'43.2041°N 27.9098°E', discoverer:'M. Georgieva', img:'🏛️',photo:null, mode:'CERAMIC', likes:8,  comments:[] },
+  { id:'M-991', name:'Железен Накрайник', mat:'Желязо',  date:'2024-03-22', gps:'43.2059°N 27.9121°E', discoverer:'K. Stanchev',  img:'⚔️',photo:null, mode:'METAL',   likes:31, comments:[] },
+  { id:'G-033', name:'Стъклена Флакончета',mat:'Стъкло', date:'2024-03-23', gps:'43.2038°N 27.9089°E', discoverer:'Dr. Ivanova',  img:'🔮', photo:null, mode:'GLASS',   likes:19, comments:[] },
+  { id:'S-770', name:'Каменна Плочка',    mat:'Камък',   date:'2024-03-18', gps:'43.2062°N 27.9130°E', discoverer:'Prof. Kolev',  img:'📜', photo:null, mode:'STONE',   likes:11, comments:[] },
+];
+
+let artifacts = [...DEFAULT_ARTIFACTS];
+
+const USERS = {
+  'admin':    'admin123',
+  'refers':   'thebestrefers',
+  'visitors':  'votemehano',
+  'drpetrov': 'petrov456',
+};
+
+async function loadArtifacts() {
+  try {
+    const { data, error } = await sb.from('artifacts').select('*').order('date', { ascending: false });
+    if (error) throw error;
+    if (data && data.length > 0) {
+      artifacts = data.map(a => ({
+        ...a,
+        comments: Array.isArray(a.comments) ? a.comments : [],
+        photo: a.photo || null,
+      }));
+    } else {
+      // Първо зареждане — запази default артефактите в Supabase
+      for (const a of DEFAULT_ARTIFACTS) {
+        await sb.from('artifacts').upsert(a);
+      }
+    }
+  } catch(e) {
+    console.warn('Supabase недостъпен, зареждам от localStorage:', e);
+    const saved = localStorage.getItem('archeoiot_artifacts');
+    if (saved) artifacts = JSON.parse(saved);
+  }
+  renderArtifacts();
+  renderReportArtifacts();
+  renderMap();
+}
+
+async function saveArtifactToCloud(a) {
+  try {
+    const { error } = await sb.from('artifacts').upsert({
+      id: a.id, name: a.name, mat: a.mat, date: a.date,
+      gps: a.gps, discoverer: a.discoverer, img: a.img,
+      photo: a.photo || null, mode: a.mode,
+      likes: a.likes, comments: a.comments
+    });
+    if (error) throw error;
+  } catch(e) {
+    console.warn('Cloud save failed, using localStorage:', e);
+    localStorage.setItem('archeoiot_artifacts', JSON.stringify(artifacts));
+  }
+}
+
+async function deleteArtifactFromCloud(id) {
+  try {
+    await sb.from('artifacts').delete().eq('id', id);
+  } catch(e) {
+    localStorage.setItem('archeoiot_artifacts', JSON.stringify(artifacts));
+  }
+}
+
+const archiveData = [
+  { id:'ARC-001', name:'Бронзова Фибула', mat:'Бронз',  img:'🔱', mode:'METAL',   startTds:16.0, endTds:0.4,  startDate:'2024-01-10', endDate:'2024-01-14', discoverer:'Dr. Petrov',   gps:'43.2044°N 27.9100°E', notes:'Успешно завършена десалинация.',   outcome:'success' },
+  { id:'ARC-002', name:'Керамична Лампа', mat:'Глина',  img:'🏮', mode:'CERAMIC', startTds:16.0, endTds:7.8,  startDate:'2024-01-22', endDate:'2024-02-05', discoverer:'Dr. Ivanova',  gps:'43.2049°N 27.9108°E', notes:'Плато на ден 14.',                 outcome:'success' },
+  { id:'ARC-003', name:'Стъклено Шише',   mat:'Стъкло', img:'🔮', mode:'GLASS',   startTds:16.0, endTds:12.1, startDate:'2024-02-12', endDate:'2024-03-05', discoverer:'M. Georgieva', gps:'43.2037°N 27.9087°E', notes:'Пукнатина при ден 21.',            outcome:'warning' },
+  { id:'ARC-004', name:'Оловна Котва',    mat:'Олово',  img:'⚓', mode:'METAL',   startTds:16.0, endTds:0.2,  startDate:'2024-02-28', endDate:'2024-03-02', discoverer:'K. Stanchev',  gps:'43.2060°N 27.9118°E', notes:'NaOH обработка — отличен резултат.',outcome:'success' },
+];
+
+let sensorHistory = [];
+let relayState    = { r1:false, r2:false, r3:false };
+let activeMode    = 'CERAMIC';
+let autoMode      = false;
+let espOnline     = false;
+let ws            = null;
+let filterMode    = 'ALL';
+let addForm       = { img:'🏺', mode:'CERAMIC', isEdit:false, editId:null };
+let mapHighlight  = null;
+let operatorId    = '';
+let sessionStart  = Date.now();
+let tdsChart      = null;
+let offlineTimer  = null;
+
+// ─── LOGIN ────────────────────────────────────────────────────────────────────
+
+function doLogin() {
+  const id = document.getElementById('login-id').value.trim();
+  const pw = document.getElementById('login-pw').value.trim();
+  if (!id || !pw) return;
+
+  if (!USERS[id] || USERS[id] !== pw) {
+    let err = document.getElementById('login-error');
+    if (err) err.style.display = 'block';
+    document.getElementById('login-pw').value = '';
+    document.getElementById('login-pw').focus();
+    return;
+  }
+
+  operatorId = id;
+  document.getElementById('login-screen').style.display = 'none';
+  let err = document.getElementById('login-error');
+  if (err) err.style.display = 'none';
+  initAll();
+}
+
+function doLogout() {
+  document.getElementById('login-screen').style.display = 'flex';
+  if (ws) ws.close();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function initAll() {
+  initChart();
+  loadArtifacts(); // зарежда от Supabase
+  renderArchive();
+  renderMatrix();
+  renderSysInfo();
+  setMode(activeMode);
+  connectWS(ESP_WS_DEFAULT);
+  document.getElementById('ws-input').value = ESP_WS_DEFAULT;
+  setInterval(updateClock, 1000);
+  setInterval(updateSession, 5000);
+}
+
+// ─── CLOCK ────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('footer-coords').textContent =
+    '43.2046°N 27.9105°E // ' + now.toLocaleTimeString('bg-BG');
+}
+
+function updateSession() {
+  const sec = Math.floor((Date.now()-sessionStart)/1000);
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+  document.getElementById('session-time').textContent =
+    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  document.getElementById('set-datacount').textContent = sensorHistory.length;
+  document.getElementById('data-count').textContent    = sensorHistory.length;
+}
+
+// ─── MQTT ─────────────────────────────────────────────────────────────────────
+// СМЕНИ TOPIC-А на нещо уникално за теб!
+const MQTT_TOPIC = 'archeoiot/abc123xyz';
+let mqttClient = null;
+
+function connectWS(url) {
+  // url параметърът вече не се използва - свързваме се към HiveMQ
+  document.getElementById('ws-url-label').textContent = 'MQTT: broker.hivemq.com // topic: ' + MQTT_TOPIC;
+
+  if (mqttClient) { try { mqttClient.end(); } catch(e){} }
+
+  mqttClient = mqtt.connect('wss://broker.hivemq.com:8884/mqtt', {
+    clientId: 'archeoiot_web_' + Math.random().toString(16).slice(2,8),
+    clean: true,
+    reconnectPeriod: 5000,
+  });
+
+  mqttClient.on('connect', () => {
+    setEspStatus(false); // офлайн докато не дойде съобщение
+    mqttClient.subscribe(MQTT_TOPIC);
+  });
+
+  mqttClient.on('message', (topic, message) => {
+    try {
+      const d = JSON.parse(message.toString());
+      clearTimeout(offlineTimer);
+      offlineTimer = setTimeout(() => setEspStatus(false), 15000);
+      setEspStatus(true);
+
+      const row = {
+        time: new Date().toLocaleTimeString('bg-BG', {hour:'2-digit', minute:'2-digit', second:'2-digit'}),
+        tds:  parseFloat(d.tds)  || 0,
+        ec:   parseFloat(d.ec)   || 0,
+        temp: parseFloat(d.temp) || 0,
+        wl:   parseFloat(d.wl)   || 85,
+      };
+      sensorHistory = [...sensorHistory, row].slice(-40);
+
+      updateSensorUI(row);
+      updateChart();
+      updatePhase();
+      updatePrediction();
+      updateReportTable();
+    } catch(e) {}
+  });
+
+  mqttClient.on('error', () => setEspStatus(false));
+  mqttClient.on('offline', () => setEspStatus(false));
+}
+
+function reconnectWS() {
+  connectWS(null);
+}
+
+function setEspStatus(online) {
+  espOnline = online;
+  const badge = document.getElementById('esp-badge');
+  const dot   = document.getElementById('esp-dot');
+  const lbl   = document.getElementById('esp-label');
+  const ban   = document.getElementById('offline-banner');
+  const nd    = document.getElementById('node-esp01');
+  const ndot  = document.getElementById('node-dot');
+  const ntxt  = document.getElementById('node-status-text');
+  const fot   = document.getElementById('foot-esp');
+  const fdot  = document.getElementById('foot-data');
+  const sstat = document.getElementById('set-status');
+
+  badge.className = 'badge ' + (online?'online':'offline');
+  dot.className   = 'dot '   + (online?'green pulse':'red');
+  lbl.textContent = online?'ESP СВЪРЗАН':'ESP ОФЛАЙН';
+  ban.className   = 'offline-banner' + (online?'':' show');
+  nd.className    = 'node-card ' + (online?'online':'offline');
+  ndot.style.background = online?'var(--green)':'var(--red)';
+  ntxt.style.color      = online?'var(--green)':'var(--red)';
+  ntxt.textContent      = online?'ONLINE':'OFFLINE';
+  fot.style.background  = online?'var(--green)':'var(--red)';
+  fdot.style.background = sensorHistory.length>0?'var(--green)':'var(--red)';
+  sstat.textContent     = online?'ОНЛАЙН':'ОФЛАЙН';
+  sstat.style.color     = online?'var(--green)':'var(--red)';
+
+  document.querySelectorAll('.relay-btn').forEach(b=>{
+    b.disabled = !online && !autoMode;
+  });
+}
+
+// ─── SENSOR UI ────────────────────────────────────────────────────────────────
+function updateSensorUI(d) {
+  const target = MODES[activeMode].target;
+  const maxTds = 20;
+
+  document.getElementById('val-tds').textContent  = d.tds.toFixed(2);
+  document.getElementById('val-ec').textContent   = d.ec.toFixed(2);
+  document.getElementById('val-temp').textContent = d.temp.toFixed(1);
+  document.getElementById('val-wl').textContent   = Math.round(d.wl);
+
+  document.getElementById('bar-tds').style.width  = Math.min(100, d.tds/maxTds*100)+'%';
+  document.getElementById('bar-ec').style.width   = Math.min(100, d.ec/30*100)+'%';
+  document.getElementById('bar-temp').style.width = Math.min(100, d.temp/40*100)+'%';
+  document.getElementById('bar-wl').style.width   = d.wl+'%';
+
+  document.getElementById('node-mode').textContent = MODES[activeMode].name;
+  document.getElementById('node-mode').style.color = MODES[activeMode].color;
+}
+
+// ─── CHART ────────────────────────────────────────────────────────────────────
+function initChart() {
+  const ctx = document.getElementById('tds-chart').getContext('2d');
+  tdsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'TDS (ppt)',
+          data: [],
+          borderColor: '#00f2ff',
+          backgroundColor: 'rgba(0,242,255,0.08)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+        },
+        {
+          label: 'Temp (°C)',
+          data: [],
+          borderColor: '#ffea00',
+          backgroundColor: 'rgba(255,234,0,0.06)',
+          borderWidth: 1.5,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#07070a',
+          borderColor: 'rgba(0,242,255,0.2)',
+          borderWidth: 1,
+          titleColor: '#00f2ff',
+          bodyColor: '#888',
+          titleFont: { family: "'Share Tech Mono', monospace", size: 10 },
+          bodyFont:  { family: "'Share Tech Mono', monospace", size: 10 },
+        },
+        annotation: {
+          annotations: {
+            targetLine: {
+              type: 'line',
+              yMin: MODES[activeMode].target,
+              yMax: MODES[activeMode].target,
+              borderColor: MODES[activeMode].color,
+              borderWidth: 1,
+              borderDash: [4,4],
+              label: {
+                display: true,
+                content: 'TARGET',
+                color: MODES[activeMode].color,
+                font: { size: 8, family: "'Share Tech Mono', monospace" }
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color:'#1a1a2e', font:{ family:"'Share Tech Mono',monospace", size:8 }, maxTicksLimit:8 },
+          grid:  { color:'rgba(13,13,26,0.8)' },
+        },
+        y: {
+          ticks: { color:'#1a1a2e', font:{ family:"'Share Tech Mono',monospace", size:8 } },
+          grid:  { color:'rgba(13,13,26,0.8)' },
+        }
+      }
+    }
+  });
+}
+
+function updateChart() {
+  if (!tdsChart) return;
+  tdsChart.data.labels   = sensorHistory.map(r=>r.time);
+  tdsChart.data.datasets[0].data = sensorHistory.map(r=>r.tds);
+  tdsChart.data.datasets[1].data = sensorHistory.map(r=>r.temp);
+  tdsChart.update('none');
+}
+
+// ─── PHASE ────────────────────────────────────────────────────────────────────
+function updatePhase() {
+  if (!sensorHistory.length) return;
+  const latest = sensorHistory[sensorHistory.length-1];
+  const target = MODES[activeMode].target;
+  const pct    = Math.min(100, Math.max(0, ((16-latest.tds)/(16-target))*100));
+  const delta  = sensorHistory.length>5
+    ? Math.abs(sensorHistory[sensorHistory.length-1].tds - sensorHistory[sensorHistory.length-6].tds)
+    : null;
+  const plateau= delta!==null && delta<0.05;
+  const phaseIdx = pct<8?0:pct<75?1:plateau?3:2;
+
+  const names  = ['Накисване','Активно обезсоляване','Плато','Финализиране'];
+  const colors = ['#00f2ff','#ffea00','#ff7c00','#00ff41'];
+
+  for(let i=0;i<4;i++){
+    const done   = i<phaseIdx;
+    const active = i===phaseIdx;
+    const ipct   = active?(i===0?pct*10:i===1?pct:i===2?(plateau?100:80):100):done?100:0;
+    document.getElementById(`ph${i}-bar`).style.width = ipct+'%';
+    document.getElementById(`ph${i}-lbl`).style.color = active?'#fff':done?'#444':'#222';
+    if(active) document.getElementById(`ph${i}-pct`).textContent = Math.round(ipct)+'%';
+    else document.getElementById(`ph${i}-pct`).textContent='';
+  }
+
+  const badge = document.getElementById('phase-badge');
+  badge.textContent = names[phaseIdx];
+  badge.style.color = colors[phaseIdx];
+  badge.style.borderColor = colors[phaseIdx]+'44';
+  badge.style.background  = colors[phaseIdx]+'10';
+
+  document.getElementById('plateau-fill').style.width = pct+'%';
+  if(plateau){
+    document.getElementById('plateau-fill').style.background = 'var(--green)';
+    document.getElementById('plateau-val').textContent = '✓ PLATEAU';
+    document.getElementById('plateau-val').style.color = 'var(--green)';
+  } else {
+    document.getElementById('plateau-fill').style.background = 'var(--yellow)';
+    document.getElementById('plateau-val').textContent = pct.toFixed(1)+'%';
+    document.getElementById('plateau-val').style.color = 'var(--yellow)';
+  }
+}
+
+// ─── PREDICTION ──────────────────────────────────────────────────────────────
+function updatePrediction() {
+  const el = document.getElementById('pred-content');
+  const bc = document.getElementById('pred-conf-badge');
+
+  if(sensorHistory.length<6){
+    el.innerHTML = '<div style="font-size:10px;color:var(--dim);font-style:italic">Недостатъчно данни за предсказване</div>';
+    bc.innerHTML='';
+    return;
+  }
+  const data = sensorHistory.slice(-Math.min(15,sensorHistory.length));
+  const n=data.length;
+  let sx=0,sy=0,sxy=0,sx2=0;
+  data.forEach((s,i)=>{sx+=i;sy+=s.tds;sxy+=i*s.tds;sx2+=i*i;});
+  const slope=(n*sxy-sx*sy)/(n*sx2-sx*sx);
+  if(slope>=0){
+    el.innerHTML='<div style="font-size:10px;color:var(--dim)">TDS не пада — провери сензора</div>';
+    return;
+  }
+  const intercept=(sy-slope*sx)/n;
+  const target=MODES[activeMode].target;
+  const stepsLeft=(target-intercept)/slope-(n-1);
+  if(stepsLeft<=0){
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:8px;color:var(--green)"><span>✓</span><span style="font-size:11px;font-weight:bold;text-transform:uppercase">Целевото TDS е достигнато!</span></div>`;
+    return;
+  }
+  const days=(stepsLeft*30/1440).toFixed(1);
+  const conf=Math.min(97,Math.max(55,Math.round(90-stepsLeft*0.015)));
+  const date=new Date(Date.now()+days*86400000).toLocaleDateString('bg-BG');
+  const rate=((-slope)*48).toFixed(3);
+
+  bc.innerHTML=`<span style="font-size:8px;color:var(--orange);font-weight:bold;border:1px solid rgba(255,124,0,0.3);padding:2px 8px">${conf}% ТОЧНОСТ</span>`;
+
+  el.innerHTML=`
+    <div class="pred-grid">
+      <div class="pred-item"><div class="pred-label">Оставащи дни</div><div class="pred-value" style="color:var(--orange)">${days}</div><div class="pred-unit">дни</div><div class="pred-accent" style="background:var(--orange)"></div></div>
+      <div class="pred-item"><div class="pred-label">Очаквана дата</div><div class="pred-value" style="color:var(--cyan);font-size:13px">${date}</div><div class="pred-accent" style="background:var(--cyan)"></div></div>
+      <div class="pred-item"><div class="pred-label">TDS спад/ден</div><div class="pred-value" style="color:var(--green)">${rate}</div><div class="pred-unit">ppt/d</div><div class="pred-accent" style="background:var(--green)"></div></div>
+      <div class="pred-item"><div class="pred-label">Точност</div><div class="pred-value" style="color:var(--yellow)">${conf}</div><div class="pred-unit">%</div><div class="pred-accent" style="background:var(--yellow)"></div></div>
+    </div>`;
+}
+
+// ─── RELAY ────────────────────────────────────────────────────────────────────
+function toggleRelay(id) {
+  if(!espOnline && !autoMode) return;
+  relayState[id] = !relayState[id];
+  sendRelay(id, relayState[id]);
+  updateRelayUI();
+}
+
+function sendRelay(id, state) {
+  if(ws && ws.readyState===WebSocket.OPEN)
+    ws.send(JSON.stringify({relay:id, state:state?'on':'off'}));
+}
+
+function emergencyStop() {
+  Object.keys(relayState).forEach(k=>{
+    relayState[k]=false;
+    sendRelay(k,false);
+  });
+  if(ws && ws.readyState===WebSocket.OPEN)
+    ws.send(JSON.stringify({emergency:true}));
+  updateRelayUI();
+}
+
+function updateRelayUI() {
+  ['r1','r2','r3'].forEach(id=>{
+    const on = relayState[id];
+    const btn = document.getElementById(id+'-btn');
+    const tog = document.getElementById(id+'-tog');
+    if(!btn) return;
+    btn.className = 'relay-btn' + (on?' on':'');
+    tog.className = 'toggle' + (on?' on':'');
+    btn.disabled  = !espOnline && !autoMode;
+  });
+}
+
+// ─── AUTO MODE ────────────────────────────────────────────────────────────────
+function toggleAuto() {
+  autoMode = !autoMode;
+  const tog = document.getElementById('auto-toggle');
+  const lbl = document.getElementById('auto-label');
+  const desc= document.getElementById('auto-desc');
+  const box = document.getElementById('auto-box');
+  tog.className = 'toggle' + (autoMode?' on':'');
+  lbl.style.color = autoMode?'var(--cyan)':'var(--dim)';
+  desc.style.display = autoMode?'block':'none';
+  box.style.borderColor = autoMode?'var(--cyan)':'var(--border)';
+  box.style.background  = autoMode?'rgba(0,242,255,0.04)':'';
+  document.getElementById('relay-panel').style.opacity     = autoMode?'0.4':'1';
+  document.getElementById('relay-panel').style.pointerEvents = autoMode?'none':'auto';
+}
+
+function runAutoMode(tds) {
+  const target = MODES[activeMode].target;
+  if(tds > target+2.0){ sendRelay('r3',true);  relayState.r3=true; }
+  else if(tds<=target){ sendRelay('r3',false); relayState.r3=false; }
+  updateRelayUI();
+}
+
+// ─── MODE ─────────────────────────────────────────────────────────────────────
+function setMode(mode) {
+  activeMode = mode;
+  const m = MODES[mode];
+  Object.keys(MODES).forEach(k=>{
+    const btn = document.getElementById('proto-'+k);
+    const mb  = document.getElementById('add-proto-'+k);
+    if(btn){
+      btn.style.color=k===mode?'#000':'var(--dim)';
+      btn.style.background=k===mode?m.color:'';
+      btn.style.borderColor=k===mode?m.color:'var(--border)';
+    }
+    if(mb){
+      mb.style.color=k===mode?'#000':'var(--dim)';
+      mb.style.background=k===mode?MODES[k].color:'';
+      mb.style.borderColor=k===mode?MODES[k].color:'var(--border)';
+    }
+  });
+  document.getElementById('plateau-target').textContent =
+    `Цел: ${m.target} ppt // Δ < 1% за 21 дни`;
+  if(tdsChart) {
+    tdsChart.update();
+  }
+  renderMatrix();
+}
+
+// ─── EXPORT CSV ───────────────────────────────────────────────────────────────
+function exportCSV() {
+  const csv = 'Time,TDS,EC,Temp,WaterLevel\n' +
+    sensorHistory.map(r=>`${r.time},${r.tds},${r.ec},${r.temp},${r.wl}`).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'ArcheoIoT_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+// ─── REPORT TABLE ─────────────────────────────────────────────────────────────
+function updateReportTable() {
+  const rows = [...sensorHistory].reverse().slice(0,24);
+  document.getElementById('report-table').innerHTML = rows.map(r=>`
+    <tr>
+      <td style="color:var(--cyan);font-weight:bold">${r.time}</td>
+      <td class="right" style="color:var(--cyan)">${r.tds.toFixed(2)}</td>
+      <td class="right" style="color:var(--green)">${r.ec.toFixed(2)}</td>
+      <td class="right" style="color:var(--yellow)">${r.temp.toFixed(1)}</td>
+      <td class="right" style="color:#888">${Math.round(r.wl)}</td>
+    </tr>`).join('') ||
+    '<tr><td colspan="5" style="text-align:center;color:var(--dim);padding:12px">Изчакване на данни...</td></tr>';
+}
+
+function renderReportArtifacts() {
+  document.getElementById('report-artifacts').innerHTML = artifacts.map(a=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);padding:12px;margin-bottom:6px;transition:border-color 0.2s"
+      onmouseover="this.style.borderColor='rgba(255,234,0,0.2)'"
+      onmouseout="this.style.borderColor='var(--border)'">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:24px">${a.img}</span>
+        <div>
+          <div style="font-size:8px;color:var(--yellow);font-weight:bold;letter-spacing:0.15em">${a.id}</div>
+          <div style="font-size:11px;color:#fff;font-weight:bold;text-transform:uppercase">${a.name}</div>
+        </div>
+      </div>
+      <button class="btn btn-yellow" onclick="downloadReport('${a.id}')">⬇ Доклад</button>
+    </div>`).join('');
+}
+
+function downloadReport(id) {
+  const a = artifacts.find(x=>x.id===id);
+  if(!a) return;
+  const m = MODES[a.mode];
+  const latest = sensorHistory.length>0?sensorHistory[sensorHistory.length-1]:null;
+  const txt = `ARCHEO-IOT ARTIFACT REPORT
+${'='.repeat(50)}
+ID: ${a.id}
+Name: ${a.name}
+Material: ${a.mat}
+Discoverer: ${a.discoverer}
+GPS: ${a.gps}
+Date: ${a.date}
+Protocol: ${m.name} (${m.mix})
+Target TDS: ${m.target} ppt
+Cycle: ${m.cycle} days
+
+LIVE DATA AT REPORT TIME:
+TDS:  ${latest?latest.tds.toFixed(2):'—'} ppt
+EC:   ${latest?latest.ec.toFixed(2):'—'} mS/cm
+Temp: ${latest?latest.temp.toFixed(1):'—'} °C
+
+RECENT LOG (last 10 readings):
+${sensorHistory.slice(-10).map(r=>`${r.time}  TDS:${r.tds}  EC:${r.ec}  Temp:${r.temp}°C  WL:${r.wl}%`).join('\n')||'No data'}
+
+Generated: ${new Date().toISOString()}
+Archeo-IoT v1.0`;
+  const el = document.createElement('a');
+  el.href = URL.createObjectURL(new Blob([txt],{type:'text/plain'}));
+  el.download = `Report_${id}.txt`;
+  el.click();
+}
+
+// ─── ARTIFACTS ────────────────────────────────────────────────────────────────
+function renderArtifacts() {
+  const q = document.getElementById('art-search').value.toLowerCase();
+  const filtered = artifacts.filter(a=>
+    (filterMode==='ALL'||a.mode===filterMode)&&
+    (!q||a.name.toLowerCase().includes(q)||a.id.toLowerCase().includes(q)||a.mat.toLowerCase().includes(q))
+  );
+  document.getElementById('artifact-grid').innerHTML = filtered.length ? filtered.map(a=>{
+    const m=MODES[a.mode];
+    return `
+    <div class="artifact-card" onclick="openArtifact('${a.id}')">
+      <div class="artifact-emoji" style="${a.photo?'padding:0':''}">${a.photo?'<img src="'+a.photo+'" style="width:100%;height:100%;object-fit:cover">':a.img}</div>
+      <div class="artifact-info">
+        <div class="artifact-id" style="color:${m.color}">${a.id}</div>
+        <div class="artifact-name">${a.name}</div>
+        <div class="artifact-meta">
+          <span>📍 ${a.mat}</span>
+          <span>❤ ${a.likes}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('') : '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--dim);text-transform:uppercase;font-size:11px">Няма намерени артефакти</div>';
+}
+
+function setFilter(f) {
+  filterMode=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>{
+    b.classList.toggle('active', b.id==='f-'+f);
+  });
+  renderArtifacts();
+}
+
+function openArtifact(id) {
+  const a = artifacts.find(x=>x.id===id);
+  if(!a) return;
+  const m = MODES[a.mode];
+  document.getElementById('art-modal-title').textContent = a.id+' // '+a.name;
+  document.getElementById('art-modal-body').innerHTML = `
+    <div style="text-align:center;font-size:56px;padding:${a.photo?'0':'24px'};background:var(--bg3);margin-bottom:16px;border:1px solid var(--border);overflow:hidden;max-height:200px">${a.photo?'<img src="'+a.photo+'" style="width:100%;max-height:200px;object-fit:cover">':a.img}</div>
+    <div class="form-grid" style="margin-bottom:16px">
+      ${[['Материал',a.mat],['Откривател',a.discoverer],['GPS',a.gps],['Дата',a.date],
+         ['Протокол',m.name],['Target TDS',m.target+' ppt']].map(([l,v])=>`
+      <div style="background:var(--bg3);border:1px solid var(--border);padding:10px">
+        <div style="font-size:8px;color:#555;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px">${l}</div>
+        <div style="font-size:11px;color:#fff;font-weight:bold">${v}</div>
+      </div>`).join('')}
+    </div>
+    <div>
+      <div style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">Коментари (${a.comments.length})</div>
+      <div id="comments-${id}" style="max-height:120px;overflow-y:auto;margin-bottom:8px">
+        ${a.comments.map(c=>`
+          <div class="comment-box">
+            <div class="comment-user">${c.user}</div>
+            <div class="comment-text">${c.text}</div>
+          </div>`).join('')||'<div style="font-size:10px;color:var(--dim);font-style:italic">Няма коментари</div>'}
+      </div>
+      <div class="comment-input-row">
+        <input class="comment-input" id="cmt-${id}" placeholder="Добави коментар..."
+          onkeydown="if(event.key==='Enter')addComment('${id}')">
+        <button class="comment-send" onclick="addComment('${id}')">➤</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-cyan" onclick="openEditArtifact('${id}')">✏ Редактирай</button>
+      <button class="btn" style="border-color:var(--border);color:var(--dim)"
+        onclick="likeArtifact('${id}')">❤ ${a.likes}</button>
+      <button class="btn" style="border-color:rgba(255,0,60,0.3);color:var(--red);margin-left:auto"
+        onclick="deleteArtifact('${id}')">🗑 Изтрий</button>
+    </div>`;
+  openModal('art-modal');
+}
+
+async function addComment(id) {
+  const inp = document.getElementById('cmt-'+id);
+  if(!inp||!inp.value.trim()) return;
+  const a = artifacts.find(x=>x.id===id);
+  if(!a) return;
+  a.comments.push({ user: operatorId||'Operator', text: inp.value });
+  inp.value='';
+  await saveArtifactToCloud(a);
+  openArtifact(id);
+}
+
+async function likeArtifact(id) {
+  const a = artifacts.find(x=>x.id===id);
+  if(a) { a.likes++; await saveArtifactToCloud(a); openArtifact(id); renderArtifacts(); }
+}
+
+async function deleteArtifact(id) {
+  if(!confirm('Изтрий '+id+'?')) return;
+  artifacts = artifacts.filter(x=>x.id!==id);
+  await deleteArtifactFromCloud(id);
+  closeModal('art-modal');
+  renderArtifacts();
+  renderReportArtifacts();
+  renderMap();
+}
+
+// ─── ADD / EDIT ARTIFACT ──────────────────────────────────────────────────────
+function openAddArtifact() {
+  addForm = { img:'🏺', mode:'CERAMIC', isEdit:false, editId:null, photo:null };
+  document.getElementById('photo-preview').innerHTML = '🏺';
+  document.getElementById('photo-preview').style.padding = '';
+  const fi = document.getElementById('f-photo'); if(fi) fi.value='';
+  document.getElementById('add-modal-title').textContent = '+ Нов Артефакт';
+  document.getElementById('f-id').disabled  = false;
+  document.getElementById('f-id').value     = '';
+  document.getElementById('f-name').value   = '';
+  document.getElementById('f-mat').value    = '';
+  document.getElementById('f-disc').value   = '';
+  document.getElementById('f-gps').value    = '';
+  document.getElementById('f-date').value   = new Date().toISOString().slice(0,10);
+  renderEmojiPick();
+  renderAddProto();
+  openModal('add-modal');
+}
+
+function openEditArtifact(id) {
+  const a = artifacts.find(x=>x.id===id);
+  if(!a) return;
+  addForm = { img:a.img, mode:a.mode, isEdit:true, editId:id, photo:a.photo||null };
+  const prev = document.getElementById('photo-preview');
+  if(a.photo){ prev.innerHTML='<img src="'+a.photo+'" style="width:100%;height:100%;object-fit:cover">'; prev.style.padding='0'; }
+  else { prev.innerHTML=a.img; prev.style.padding=''; }
+  document.getElementById('add-modal-title').textContent = '✏ Редактирай // '+id;
+  document.getElementById('f-id').disabled  = true;
+  document.getElementById('f-id').value     = a.id;
+  document.getElementById('f-name').value   = a.name;
+  document.getElementById('f-mat').value    = a.mat;
+  document.getElementById('f-disc').value   = a.discoverer;
+  document.getElementById('f-gps').value    = a.gps;
+  document.getElementById('f-date').value   = a.date;
+  closeModal('art-modal');
+  renderEmojiPick();
+  renderAddProto();
+  openModal('add-modal');
+}
+
+function renderEmojiPick() {
+  document.getElementById('emoji-pick').innerHTML = EMOJIS.map(e=>`
+    <button class="emoji-opt ${e===addForm.img?'selected':''}" onclick="pickEmoji('${e}')">${e}</button>`).join('');
+}
+
+function pickEmoji(e) {
+  addForm.img=e;
+  addForm.photo=null; // изчисти снимката ако е избрана икона
+  document.getElementById('photo-preview').innerHTML=e;
+  document.getElementById('photo-preview').style.padding='';
+  renderEmojiPick();
+}
+
+function handlePhotoUpload(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  if(file.size > 2 * 1024 * 1024) { alert('Снимката е твърде голяма! Максимум 2MB.'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const base64 = e.target.result;
+    addForm.photo = base64;
+    const prev = document.getElementById('photo-preview');
+    prev.innerHTML = '<img src="'+base64+'" style="width:100%;height:100%;object-fit:cover">';
+    prev.style.padding = '0';
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderAddProto() {
+  const grid = document.getElementById('add-proto-grid');
+  grid.innerHTML = Object.entries(MODES).map(([k,m])=>`
+    <button class="proto-btn" id="add-proto-${k}" onclick="pickAddMode('${k}')"
+      style="color:${k===addForm.mode?'#000':'var(--dim)'};background:${k===addForm.mode?m.color:''};border-color:${k===addForm.mode?m.color:'var(--border)'}">
+      ${m.icon} ${m.name}
+    </button>`).join('');
+}
+
+function pickAddMode(m) {
+  addForm.mode=m;
+  renderAddProto();
+}
+
+async function saveArtifact() {
+  const id   = document.getElementById('f-id').value.trim();
+  const name = document.getElementById('f-name').value.trim();
+  const mat  = document.getElementById('f-mat').value.trim();
+  const disc = document.getElementById('f-disc').value.trim();
+  const gps  = document.getElementById('f-gps').value.trim();
+  const date = document.getElementById('f-date').value;
+  if(!id||!name||!mat||!disc||!date) return;
+
+  const photo = addForm.photo || null;
+
+  if(addForm.isEdit) {
+    const a = artifacts.find(x=>x.id===addForm.editId);
+    if(a){
+      a.name=name; a.mat=mat; a.discoverer=disc; a.gps=gps;
+      a.date=date; a.img=addForm.img; a.mode=addForm.mode;
+      if(photo) a.photo=photo;
+      await saveArtifactToCloud(a);
+    }
+  } else {
+    if(artifacts.find(x=>x.id===id)) { alert('ID вече съществува!'); return; }
+    const newArt = {id,name,mat,date,gps,discoverer:disc,img:addForm.img,photo,mode:addForm.mode,likes:0,comments:[]};
+    artifacts.push(newArt);
+    await saveArtifactToCloud(newArt);
+  }
+  addForm.photo = null;
+  closeModal('add-modal');
+  renderArtifacts();
+  renderReportArtifacts();
+  renderMap();
+}
+
+// ─── ARCHIVE ──────────────────────────────────────────────────────────────────
+function renderArchive() {
+  document.getElementById('archive-list').innerHTML = archiveData.map(arc=>{
+    const m    = MODES[arc.mode];
+    const redu = (((arc.startTds-arc.endTds)/arc.startTds)*100).toFixed(1);
+    const days = Math.round((new Date(arc.endDate)-new Date(arc.startDate))/86400000);
+    const succ = arc.outcome==='success';
+    return `
+    <div class="arc-item" onclick="openArcDetail('${arc.id}')">
+      <div class="arc-stripe" style="background:${succ?'var(--green)':'var(--yellow)'}"></div>
+      <div class="arc-emoji">${arc.img}</div>
+      <div class="arc-info">
+        <div class="arc-id" style="color:${m.color}">${arc.id}
+          <span class="arc-badge" style="color:${succ?'var(--green)':'var(--yellow)'};border-color:${succ?'rgba(0,255,65,0.3)':'rgba(255,234,0,0.3)'};background:${succ?'rgba(0,255,65,0.08)':'rgba(255,234,0,0.08)'}">
+            ${succ?'✓ УСПЕХ':'⚠ ВНИМАНИЕ'}
+          </span>
+        </div>
+        <div class="arc-name">${arc.name}</div>
+        <div class="arc-meta">${arc.mat} // ${arc.discoverer} // ${arc.startDate} → ${arc.endDate} (${days}д)</div>
+      </div>
+      <div class="arc-tds">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:bold">
+          <span style="color:var(--red)">${arc.startTds}</span>
+          <span style="color:var(--dim)">→</span>
+          <span style="color:var(--green)">${arc.endTds} ppt</span>
+        </div>
+        <div style="font-size:9px;color:var(--green);font-weight:bold;margin-top:3px">↓ ${redu}%</div>
+      </div>
+      <span style="color:var(--dim);font-size:16px">›</span>
+    </div>`;
+  }).join('');
+
+  const succ = archiveData.filter(a=>a.outcome==='success').length;
+  const warn = archiveData.filter(a=>a.outcome==='warning').length;
+  const avgDrop = (archiveData.reduce((acc,a)=>acc+(a.startTds-a.endTds),0)/archiveData.length).toFixed(1);
+  document.getElementById('archive-stats').innerHTML = [
+    {label:'Завършени',val:succ,color:'var(--green)'},
+    {label:'Предупреждения',val:warn,color:'var(--yellow)'},
+    {label:'Среден спад TDS',val:avgDrop+' ppt',color:'var(--cyan)'},
+    {label:'Общо артефакти',val:archiveData.length,color:'var(--red)'},
+  ].map(s=>`
+    <div style="background:var(--bg2);border:1px solid var(--border);padding:14px">
+      <div style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;font-weight:bold">${s.label}</div>
+      <div style="font-family:var(--head);font-size:20px;font-weight:900;color:${s.color}">${s.val}</div>
+    </div>`).join('');
+}
+
+function openArcDetail(id) {
+  const arc = archiveData.find(x=>x.id===id);
+  if(!arc) return;
+  const m = MODES[arc.mode];
+  const redu = (((arc.startTds-arc.endTds)/arc.startTds)*100).toFixed(1);
+  document.getElementById('arc-modal-title').textContent = arc.id+' // '+arc.name;
+  document.getElementById('arc-modal-body').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <span style="font-size:36px">${arc.img}</span>
+      <div>
+        <div style="font-size:8px;color:var(--dim);text-transform:uppercase">Материал: ${arc.mat} // ${arc.discoverer}</div>
+        <div style="font-size:8px;color:var(--dim)">GPS: ${arc.gps}</div>
+      </div>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);padding:14px;margin-bottom:12px">
+      <div style="font-size:8px;color:var(--dim);text-transform:uppercase;margin-bottom:10px">TDS Journey</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="text-align:center">
+          <div style="font-family:var(--head);font-size:18px;color:var(--red)">${arc.startTds}</div>
+          <div style="font-size:7px;color:var(--dim);text-transform:uppercase">START ppt</div>
+        </div>
+        <div style="flex:1;height:6px;background:linear-gradient(to right,var(--red),var(--green))"></div>
+        <div style="text-align:center">
+          <div style="font-family:var(--head);font-size:18px;color:var(--green)">${arc.endTds}</div>
+          <div style="font-size:7px;color:var(--dim);text-transform:uppercase">END ppt</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:9px;color:var(--dim);margin-top:8px">
+        Намаление: <span style="color:var(--green);font-weight:bold">${redu}%</span>
+      </div>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);padding:12px">
+      <div style="font-size:9px;color:#888;font-style:italic">${arc.notes}</div>
+    </div>`;
+  openModal('arc-modal');
+}
+
+// ─── MAP ──────────────────────────────────────────────────────────────────────
+function parseGPS(s) {
+  const m=s.match(/([\d.]+)°N\s+([\d.]+)°E/);
+  return m?{lat:parseFloat(m[1]),lon:parseFloat(m[2])}:null;
+}
+
+function renderMap() {
+  const all = [...artifacts,...archiveData].map(a=>({...a,coords:parseGPS(a.gps)})).filter(a=>a.coords);
+  document.getElementById('map-count').textContent = all.length+' точки';
+
+  const lats=all.map(a=>a.coords.lat), lons=all.map(a=>a.coords.lon);
+  const minLat=Math.min(...lats)-0.0008, maxLat=Math.max(...lats)+0.0008;
+  const minLon=Math.min(...lons)-0.0008, maxLon=Math.max(...lons)+0.0008;
+  const W=760,H=480,P=50;
+  const toX=lon=>P+((lon-minLon)/(maxLon-minLon))*(W-P*2);
+  const toY=lat=>P+((maxLat-lat)/(maxLat-minLat))*(H-P*2);
+
+  const svg = document.getElementById('map-svg');
+  svg.innerHTML = `
+    <rect width="${W}" height="${H}" fill="#030308" rx="2"/>
+    <text x="30" y="35" font-size="10" fill="#00f2ff" fill-opacity="0.5"
+      font-family="'Share Tech Mono',monospace" font-weight="bold">N ↑</text>
+    ${all.map(art=>{
+      const x=toX(art.coords.lon), y=toY(art.coords.lat);
+      const col=MODES[art.mode]?.color||'#00f2ff';
+      const hl=mapHighlight===art.id;
+      return `
+        <g style="cursor:pointer" onclick="highlightMap('${art.id}')">
+          ${hl?`<circle cx="${x}" cy="${y}" r="20" fill="${col}" fill-opacity="0.12" stroke="${col}" stroke-opacity="0.4" stroke-width="1"/>`:''}
+          <circle cx="${x}" cy="${y}" r="8" fill="${col}" fill-opacity="${hl?0.9:0.6}" stroke="${col}" stroke-width="${hl?2:1}"/>
+          <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#000" font-weight="900">${art.img}</text>
+          <text x="${x+11}" y="${y-8}" font-size="7" fill="${col}" font-family="'Share Tech Mono',monospace" font-weight="bold">${art.id}</text>
+          ${hl?`
+            <line x1="${x}" y1="${y+10}" x2="${x}" y2="${y+28}" stroke="${col}" stroke-width="1" stroke-dasharray="3 2"/>
+            <rect x="${x-44}" y="${y+28}" width="88" height="26" fill="#0a0a12" stroke="${col}" stroke-width="1" stroke-opacity="0.5"/>
+            <text x="${x}" y="${y+40}" text-anchor="middle" font-size="7" fill="${col}" font-weight="bold" font-family="'Share Tech Mono',monospace">${art.name||art.id}</text>
+            <text x="${x}" y="${y+50}" text-anchor="middle" font-size="6" fill="#666" font-family="'Share Tech Mono',monospace">${art.gps}</text>
+          `:''}
+        </g>`;
+    }).join('')}`;
+
+  document.getElementById('map-list').innerHTML = all.map(art=>{
+    const m=MODES[art.mode];
+    const hl=mapHighlight===art.id;
+    return `
+    <div style="background:var(--bg2);border:1px solid ${hl?'var(--cyan)':'var(--border)'};padding:12px;margin-bottom:6px;cursor:pointer;transition:border-color 0.2s"
+      onclick="highlightMap('${art.id}')"
+      onmouseover="this.style.borderColor='rgba(0,242,255,0.3)'"
+      onmouseout="this.style.borderColor='${hl?'var(--cyan)':'var(--border)'}'">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:22px">${art.img}</span>
+        <div>
+          <div style="font-size:8px;font-weight:bold;letter-spacing:0.1em;color:${m.color}">${art.id}</div>
+          <div style="font-size:11px;color:#fff;font-weight:bold">${art.name||art.id}</div>
+          <div style="font-size:8px;color:var(--dim);font-family:'Share Tech Mono',monospace">${art.gps}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function highlightMap(id) {
+  mapHighlight = mapHighlight===id?null:id;
+  renderMap();
+}
+
+// ─── SETTINGS ─────────────────────────────────────────────────────────────────
+function renderMatrix() {
+  document.getElementById('matrix-table').innerHTML = Object.entries(MODES).map(([k,m])=>`
+    <tr style="${k===activeMode?'background:var(--border)':''}">
+      <td><span style="font-weight:bold;color:${m.color}">${m.icon} ${m.name}</span></td>
+      <td class="center" style="color:#888">${m.mix}</td>
+      <td class="center" style="color:var(--cyan)">${m.target} ppt</td>
+      <td class="center" style="color:#888">${m.cycle}d</td>
+      <td class="center">
+        ${k===activeMode
+          ?'<span style="color:var(--green);font-size:8px;font-weight:bold">● ACTIVE</span>'
+          :'<span style="color:var(--dim);font-size:8px">○ STANDBY</span>'}
+      </td>
+    </tr>`).join('');
+}
+
+function renderSysInfo() {
+  const items = [
+    {label:'Version',   val:'v1.0'},
+    {label:'Operator',  val:operatorId||'N/A'},
+    {label:'MCU',       val:'ESP8266'},
+    {label:'EC Sensor', val:'DFRobot'},
+    {label:'Temp',      val:'DS18B20'},
+    {label:'Protocol',  val:'WebSocket'},
+    {label:'AI',        val:'Без AI'},
+    {label:'Deploy',    val:'Vercel'},
+  ];
+  document.getElementById('sys-info').innerHTML = items.map(i=>`
+    <div style="background:var(--bg3);border:1px solid var(--border);padding:10px">
+      <div style="font-size:7px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px">${i.label}</div>
+      <div style="font-size:10px;color:#fff;font-weight:bold">${i.val}</div>
+    </div>`).join('');
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const btns = document.querySelectorAll('.nav-btn');
+  const pages = ['dashboard','discovery','archive','reports','map','settings'];
+  btns[pages.indexOf(id)]?.classList.add('active');
+  const titles = {dashboard:'ТЕРМИНАЛ',discovery:'АРХИВ',archive:'ИСТОРИЯ',reports:'ДОКЛАДИ',map:'КАРТА',settings:'КОНФИГ'};
+  document.getElementById('header-title').textContent = 'ARCHEO-IOT // '+(titles[id]||id.toUpperCase());
+  if(id==='map') renderMap();
+  if(id==='reports') { updateReportTable(); renderReportArtifacts(); }
+  if(id==='settings') { renderSysInfo(); renderMatrix(); }
+}
+
+// ─── MODALS ───────────────────────────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('open'); });
+});
+
+// ─── LANGUAGE SWITCH ──────────────────────────────────────────────────────────
+let currentLang = 'bg';
+
+const TRANSLATIONS = {
+  bg: {
+    // Header
+    'btn-csv': '⬇ CSV',
+    'btn-emergency': '⛔ АВАРИЙНО СПИРАНЕ',
+    'lang-btn': '🌐 EN',
+    // Login
+    'login-sub-text': 'Протокол за сигурност Алфа-9',
+    'login-id-label': 'Идентификатор на оператор',
+    'login-pw-label': 'Хеш за достъп',
+    'login-error-text': '⚠ Грешно потребителско име или парола',
+    'login-btn-text': '🔐 Авторизация',
+    // Nav tooltips
+    'nav-dashboard': 'Терминал',
+    'nav-discovery': 'Архив',
+    'nav-archive': 'История',
+    'nav-reports': 'Доклади',
+    'nav-map': 'Карта',
+    'nav-settings': 'Конфиг',
+    'nav-logout': 'Изход',
+    // Page titles (showPage)
+    'title-dashboard': 'ТЕРМИНАЛ',
+    'title-discovery': 'АРХИВ',
+    'title-archive': 'ИСТОРИЯ',
+    'title-reports': 'ДОКЛАДИ',
+    'title-map': 'КАРТА',
+    'title-settings': 'КОНФИГ',
+    // Dashboard
+    'phase-title': '⚡ Фаза на процеса',
+    'phase-0': 'Накисване',
+    'phase-1': 'Активно',
+    'phase-2': 'Плато',
+    'phase-3': 'Финализиране',
+    'pred-title': '📉 Предсказване',
+    'pred-no-data': 'Недостатъчно данни за предсказване',
+    'sensor-tds': 'Соленост (TDS)',
+    'sensor-ec': 'Проводимост (EC)',
+    'sensor-temp': 'Температура',
+    'sensor-wl': 'Ниво вода',
+    'chart-title': '📈 Динамика на обезсоляването',
+    'control-title': '🔧 Хардуерен контрол',
+    'auto-label-text': 'Авто Режим',
+    'auto-desc-text': 'Системата автоматично управлява клапаните спрямо TDS',
+    'relay-r1': '💧 Дренажна помпа',
+    'relay-r2': '🌊 Клапан морска вода',
+    'relay-r3': '🔄 Клапан чешмяна вода',
+    'proto-label': 'Активен протокол',
+    'plateau-title': 'Анализ на плато',
+    'node-title': '📡 Статус на Нода',
+    'node-dashboard': 'Dashboard',
+    'offline-title': 'ESP офлайн — няма данни от сензорите',
+    'esp-offline': 'ESP ОФЛАЙН',
+    'esp-online': 'ESP ОНЛАЙН',
+    // Discovery
+    'disc-page-title': 'Дигитален Архив',
+    'disc-new-btn': '+ Нов артефакт',
+    'disc-search': 'Търси...',
+    // Archive
+    'arc-page-title': 'Архив на Завършени Проекти',
+    'arc-success': '✓ УСПЕХ',
+    'arc-warning': '⚠ ВНИМАНИЕ',
+    // Reports
+    'rep-page-title': 'Система за Доклади',
+    'rep-journal-title': '⚡ Live Сензорен Журнал',
+    'rep-artifacts-title': '📦 Доклади по Артефакт',
+    'rep-th-time': 'Час',
+    'rep-th-level': 'Ниво (%)',
+    // Map
+    'map-page-title': 'Сонарна Карта',
+    // Settings
+    'set-page-title': 'Конфигурация',
+    'set-esp-title': '📡 ESP Връзка',
+    'set-ws-label': 'WebSocket адрес',
+    'set-connect-btn': '🔄 Свържи',
+    'set-status-label': 'Статус',
+    'set-data-label': 'Данни',
+    'set-interval-label': 'Интервал',
+    'set-reconnect-label': 'Reconnect',
+    'set-matrix-title': '🧪 Матрица на Материалите',
+    'set-mat-col': 'Материал',
+    'set-mix-col': 'Микс',
+    'set-target-col': 'Цел TDS',
+    'set-cycle-col': 'Цикъл',
+    'set-status-col': 'Статус',
+    'set-sys-title': 'ℹ️ System Info',
+    // Add artifact modal
+    'add-modal-title-new': '+ Нов Артефакт',
+    'add-photo-label': 'Снимка',
+    'add-photo-btn': '📷 Избери снимка',
+    'add-photo-hint': 'JPG, PNG до 2MB — или избери икона по-долу',
+    'add-icon-label': 'Икона (ако няма снимка)',
+    'add-id-label': 'ID',
+    'add-name-label': 'Наименование',
+    'add-mat-label': 'Материал',
+    'add-disc-label': 'Откривател',
+    'add-gps-label': 'GPS',
+    'add-date-label': 'Дата',
+    'add-proto-label': 'Протокол',
+    'add-save-btn': '✓ Добави артефакт',
+    'add-cancel-btn': 'Откажи',
+    // Archive stats
+    'arc-stat-completed': 'Завършени',
+    'arc-stat-warnings': 'Предупреждения',
+    'arc-stat-avg-drop': 'Среден спад TDS',
+    'arc-stat-total': 'Общо артефакти',
+    // Sys info
+    'sys-ai': 'Без AI',
+    // Offline banner
+    'set-offline': 'ОФЛАЙН',
+    'set-online': 'ОНЛАЙН',
+    // Node data label
+    'node-data-label': 'Данни',
+    'node-session-label': 'Сесия',
+    'node-version-label': 'Версия',
+    // Active/Standby
+    'mode-active': '● ACTIVE',
+    'mode-standby': '○ STANDBY',
+    // Archive modal
+    'arc-modal-material': 'Материал',
+    'arc-tds-journey': 'TDS Journey',
+    'arc-tds-start': 'START ppt',
+    'arc-tds-end': 'END ppt',
+    'arc-reduction': 'Намаление',
+  },
+  en: {
+    // Header
+    'btn-csv': '⬇ CSV',
+    'btn-emergency': '⛔ EMERGENCY STOP',
+    'lang-btn': '🌐 БГ',
+    // Login
+    'login-sub-text': 'Security Protocol Alpha-9',
+    'login-id-label': 'Operator Identifier',
+    'login-pw-label': 'Access Hash',
+    'login-error-text': '⚠ Wrong username or password',
+    'login-btn-text': '🔐 Authorize',
+    // Nav tooltips
+    'nav-dashboard': 'Terminal',
+    'nav-discovery': 'Archive',
+    'nav-archive': 'History',
+    'nav-reports': 'Reports',
+    'nav-map': 'Map',
+    'nav-settings': 'Config',
+    'nav-logout': 'Logout',
+    // Page titles
+    'title-dashboard': 'TERMINAL',
+    'title-discovery': 'ARCHIVE',
+    'title-archive': 'HISTORY',
+    'title-reports': 'REPORTS',
+    'title-map': 'MAP',
+    'title-settings': 'CONFIG',
+    // Dashboard
+    'phase-title': '⚡ Process Phase',
+    'phase-0': 'Soaking',
+    'phase-1': 'Active',
+    'phase-2': 'Plateau',
+    'phase-3': 'Finalizing',
+    'pred-title': '📉 Prediction',
+    'pred-no-data': 'Insufficient data for prediction',
+    'sensor-tds': 'Salinity (TDS)',
+    'sensor-ec': 'Conductivity (EC)',
+    'sensor-temp': 'Temperature',
+    'sensor-wl': 'Water Level',
+    'chart-title': '📈 Desalination Dynamics',
+    'control-title': '🔧 Hardware Control',
+    'auto-label-text': 'Auto Mode',
+    'auto-desc-text': 'System automatically controls valves based on TDS',
+    'relay-r1': '💧 Drain Pump',
+    'relay-r2': '🌊 Sea Water Valve',
+    'relay-r3': '🔄 Fresh Water Valve',
+    'proto-label': 'Active Protocol',
+    'plateau-title': 'Plateau Analysis',
+    'node-title': '📡 Node Status',
+    'node-dashboard': 'Dashboard',
+    'offline-title': 'ESP offline — no sensor data',
+    'esp-offline': 'ESP OFFLINE',
+    'esp-online': 'ESP ONLINE',
+    // Discovery
+    'disc-page-title': 'Digital Archive',
+    'disc-new-btn': '+ New Artifact',
+    'disc-search': 'Search...',
+    // Archive
+    'arc-page-title': 'Completed Projects Archive',
+    'arc-success': '✓ SUCCESS',
+    'arc-warning': '⚠ WARNING',
+    // Reports
+    'rep-page-title': 'Reports System',
+    'rep-journal-title': '⚡ Live Sensor Journal',
+    'rep-artifacts-title': '📦 Reports by Artifact',
+    'rep-th-time': 'Time',
+    'rep-th-level': 'Level (%)',
+    // Map
+    'map-page-title': 'Sonar Map',
+    // Settings
+    'set-page-title': 'Configuration',
+    'set-esp-title': '📡 ESP Connection',
+    'set-ws-label': 'WebSocket address',
+    'set-connect-btn': '🔄 Connect',
+    'set-status-label': 'Status',
+    'set-data-label': 'Data',
+    'set-interval-label': 'Interval',
+    'set-reconnect-label': 'Reconnect',
+    'set-matrix-title': '🧪 Materials Matrix',
+    'set-mat-col': 'Material',
+    'set-mix-col': 'Mix',
+    'set-target-col': 'Target TDS',
+    'set-cycle-col': 'Cycle',
+    'set-status-col': 'Status',
+    'set-sys-title': 'ℹ️ System Info',
+    // Add artifact modal
+    'add-modal-title-new': '+ New Artifact',
+    'add-photo-label': 'Photo',
+    'add-photo-btn': '📷 Choose photo',
+    'add-photo-hint': 'JPG, PNG up to 2MB — or pick an icon below',
+    'add-icon-label': 'Icon (if no photo)',
+    'add-id-label': 'ID',
+    'add-name-label': 'Name',
+    'add-mat-label': 'Material',
+    'add-disc-label': 'Discoverer',
+    'add-gps-label': 'GPS',
+    'add-date-label': 'Date',
+    'add-proto-label': 'Protocol',
+    'add-save-btn': '✓ Add artifact',
+    'add-cancel-btn': 'Cancel',
+    // Archive stats
+    'arc-stat-completed': 'Completed',
+    'arc-stat-warnings': 'Warnings',
+    'arc-stat-avg-drop': 'Avg TDS Drop',
+    'arc-stat-total': 'Total Artifacts',
+    // Sys info
+    'sys-ai': 'No AI',
+    // Status
+    'set-offline': 'OFFLINE',
+    'set-online': 'ONLINE',
+    // Node data label
+    'node-data-label': 'Data',
+    'node-session-label': 'Session',
+    'node-version-label': 'Version',
+    // Active/Standby
+    'mode-active': '● ACTIVE',
+    'mode-standby': '○ STANDBY',
+    // Archive modal
+    'arc-modal-material': 'Material',
+    'arc-tds-journey': 'TDS Journey',
+    'arc-tds-start': 'START ppt',
+    'arc-tds-end': 'END ppt',
+    'arc-reduction': 'Reduction',
+  }
+};
+
+function t(key) {
+  return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || key;
+}
+
+function applyLanguage() {
+  const lang = currentLang;
+  const T = TRANSLATIONS[lang];
+  if (!T) return;
+
+  // Header buttons
+  const btnCsv = document.getElementById('btn-csv');
+  if (btnCsv) btnCsv.textContent = T['btn-csv'];
+  const btnEmergency = document.getElementById('btn-emergency');
+  if (btnEmergency) btnEmergency.textContent = T['btn-emergency'];
+  const langBtn = document.getElementById('lang-btn');
+  if (langBtn) langBtn.textContent = T['lang-btn'];
+
+  // Login screen
+  const loginSub = document.querySelector('.login-sub');
+  if (loginSub) loginSub.textContent = T['login-sub-text'];
+  const loginLabels = document.querySelectorAll('.login-label');
+  if (loginLabels[0]) loginLabels[0].textContent = T['login-id-label'];
+  if (loginLabels[1]) loginLabels[1].textContent = T['login-pw-label'];
+  const loginError = document.getElementById('login-error');
+  if (loginError) loginError.textContent = T['login-error-text'];
+  const loginBtn = document.querySelector('.login-btn');
+  if (loginBtn) loginBtn.textContent = T['login-btn-text'];
+
+  // Nav buttons tooltips
+  const navBtns = document.querySelectorAll('.nav-btn');
+  const navKeys = ['nav-dashboard','nav-discovery','nav-archive','nav-reports','nav-map','nav-settings'];
+  navBtns.forEach((btn, i) => {
+    if (navKeys[i]) btn.title = T[navKeys[i]];
+  });
+  const logoutBtn = document.querySelector('.nav-btn[onclick="doLogout()"]');
+  if (logoutBtn) logoutBtn.title = T['nav-logout'];
+
+  // Header title — update current page title
+  const headerTitle = document.getElementById('header-title');
+  if (headerTitle) {
+    const text = headerTitle.textContent;
+    const pageMap = {
+      'ТЕРМИНАЛ':'title-dashboard','TERMINAL':'title-dashboard',
+      'АРХИВ':'title-discovery','ARCHIVE':'title-discovery',
+      'ИСТОРИЯ':'title-archive','HISTORY':'title-archive',
+      'ДОКЛАДИ':'title-reports','REPORTS':'title-reports',
+      'КАРТА':'title-map','MAP':'title-map',
+      'КОНФИГ':'title-settings','CONFIG':'title-settings',
+    };
+    for (const [k,v] of Object.entries(pageMap)) {
+      if (text.includes(k)) {
+        headerTitle.textContent = 'ARCHEO-IOT // ' + T[v];
+        break;
+      }
+    }
+  }
+
+  // Phase tracker
+  const phaseTitle = document.querySelector('#page-dashboard .card:first-child .card-title');
+  if (phaseTitle) phaseTitle.innerHTML = T['phase-title'] + phaseTitle.innerHTML.split(T['phase-title'] || '⚡')[0].replace(/^.*?(?=<)/, '').replace(/.*<div/, '<div');
+  const ph0 = document.getElementById('ph0-lbl');
+  const ph1 = document.getElementById('ph1-lbl');
+  const ph2 = document.getElementById('ph2-lbl');
+  const ph3 = document.getElementById('ph3-lbl');
+  if (ph0) ph0.textContent = T['phase-0'];
+  if (ph1) ph1.textContent = T['phase-1'];
+  if (ph2) ph2.textContent = T['phase-2'];
+  if (ph3) ph3.textContent = T['phase-3'];
+
+  // Phase badge
+  const phaseBadge = document.getElementById('phase-badge');
+  if (phaseBadge) {
+    const phaseMap = {
+      'НАКИСВАНЕ': T['phase-0'],
+      'SOAKING': T['phase-0'],
+      'АКТИВНО': T['phase-1'],
+      'ACTIVE': T['phase-1'],
+      'ПЛАТО': T['phase-2'],
+      'PLATEAU': T['phase-2'],
+      'ФИНАЛИЗИРАНЕ': T['phase-3'],
+      'FINALIZING': T['phase-3'],
+    };
+    for (const [k,v] of Object.entries(phaseMap)) {
+      if (phaseBadge.textContent.trim() === k) { phaseBadge.textContent = v.toUpperCase(); break; }
+    }
+  }
+
+  // Sensor labels
+  const sensorLabels = document.querySelectorAll('.sensor-label');
+  const sensorKeys = ['sensor-tds','sensor-ec','sensor-temp','sensor-wl'];
+  sensorLabels.forEach((el, i) => { if (sensorKeys[i]) el.textContent = T[sensorKeys[i]]; });
+
+  // Auto mode
+  const autoLabel = document.getElementById('auto-label');
+  if (autoLabel) autoLabel.textContent = T['auto-label-text'];
+  const autoDesc = document.getElementById('auto-desc');
+  if (autoDesc) autoDesc.textContent = T['auto-desc-text'];
+
+  // Relay buttons
+  const r1btn = document.getElementById('r1-btn');
+  const r2btn = document.getElementById('r2-btn');
+  const r3btn = document.getElementById('r3-btn');
+  if (r1btn) r1btn.querySelector('span').textContent = T['relay-r1'];
+  if (r2btn) r2btn.querySelector('span').textContent = T['relay-r2'];
+  if (r3btn) r3btn.querySelector('span').textContent = T['relay-r3'];
+
+  // Protocol label
+  const protoLabels = document.querySelectorAll('#page-dashboard .proto-grid');
+  if (protoLabels.length > 0) {
+    const protoLabelDiv = protoLabels[0].previousElementSibling;
+    if (protoLabelDiv) protoLabelDiv.textContent = T['proto-label'];
+  }
+
+  // Plateau
+  const plateauTitle = document.querySelector('.plateau-label span:first-child');
+  if (plateauTitle) plateauTitle.textContent = T['plateau-title'];
+
+  // Offline banner
+  const offlineBannerTitle = document.querySelector('.offline-banner-title');
+  if (offlineBannerTitle) offlineBannerTitle.textContent = T['offline-title'];
+
+  // ESP badge label
+  const espLabel = document.getElementById('esp-label');
+  if (espLabel) {
+    if (espLabel.textContent.includes('ОФЛАЙН') || espLabel.textContent.includes('OFFLINE')) {
+      espLabel.textContent = T['esp-offline'];
+    } else {
+      espLabel.textContent = T['esp-online'];
+    }
+  }
+
+  // Node status
+  const nodeSysDetail = document.getElementById('sys-detail');
+  if (nodeSysDetail) {
+    const dataCount = document.getElementById('data-count')?.textContent || '0';
+    const sessionTime = document.getElementById('session-time')?.textContent || '—';
+    nodeSysDetail.innerHTML = `${T['node-data-label']}: <span id="data-count">${dataCount}</span> ${lang==='bg'?'точки':'points'}<br>${T['node-session-label']}: <span id="session-time">${sessionTime}</span><br>${T['node-version-label']}: v1.0`;
+  }
+
+  // Discovery page
+  const discTitle = document.querySelector('#page-discovery .page-title');
+  if (discTitle) discTitle.textContent = T['disc-page-title'];
+  const discNewBtn = document.querySelector('#page-discovery .btn-green');
+  if (discNewBtn) discNewBtn.textContent = T['disc-new-btn'];
+  const discSearch = document.getElementById('art-search');
+  if (discSearch) discSearch.placeholder = T['disc-search'];
+
+  // Archive page
+  const arcTitle = document.querySelector('#page-archive .page-title');
+  if (arcTitle) arcTitle.textContent = T['arc-page-title'];
+
+  // Reports page
+  const repTitle = document.querySelector('#page-reports .page-title');
+  if (repTitle) repTitle.textContent = T['rep-page-title'];
+  const repThs = document.querySelectorAll('#page-reports .data-table th');
+  if (repThs.length >= 5) {
+    repThs[0].textContent = T['rep-th-time'];
+    repThs[4].textContent = T['rep-th-level'];
+  }
+
+  // Map page
+  const mapTitle = document.querySelector('#page-map .page-title');
+  if (mapTitle) mapTitle.textContent = T['map-page-title'];
+
+  // Settings page
+  const setTitle = document.querySelector('#page-settings .page-title');
+  if (setTitle) setTitle.textContent = T['set-page-title'];
+  const setWsLabel = document.querySelector('#page-settings .form-label');
+  if (setWsLabel) setWsLabel.textContent = T['set-ws-label'];
+  const setConnectBtn = document.querySelector('#page-settings .btn-cyan');
+  if (setConnectBtn) setConnectBtn.textContent = T['set-connect-btn'];
+
+  // Settings matrix table headers
+  const matThs = document.querySelectorAll('.matrix-table thead th');
+  if (matThs.length >= 5) {
+    matThs[0].textContent = T['set-mat-col'];
+    matThs[1].textContent = T['set-mix-col'];
+    matThs[2].textContent = T['set-target-col'];
+    matThs[3].textContent = T['set-cycle-col'];
+    matThs[4].textContent = T['set-status-col'];
+  }
+
+  // Add artifact modal
+  const addModalTitle = document.getElementById('add-modal-title');
+  if (addModalTitle && !addForm.isEdit) addModalTitle.textContent = T['add-modal-title-new'];
+  const savArtBtn = document.getElementById('save-art-btn');
+  if (savArtBtn) savArtBtn.textContent = T['add-save-btn'];
+
+  // Set status
+  const setStatus = document.getElementById('set-status');
+  if (setStatus) {
+    if (setStatus.textContent === 'ОФЛАЙН' || setStatus.textContent === 'OFFLINE') {
+      setStatus.textContent = T['set-offline'];
+    } else {
+      setStatus.textContent = T['set-online'];
+    }
+  }
+
+  // Re-render dynamic content
+  renderArchive();
+  renderMatrix();
+  renderSysInfo();
+  if (document.getElementById('page-reports')?.classList.contains('active')) {
+    updateReportTable();
+    renderReportArtifacts();
+  }
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'bg' ? 'en' : 'bg';
+  applyLanguage();
+}
+
+// Patch showPage to use translated titles
+const _origShowPage = showPage;
+window.showPage = function(id) {
+  _origShowPage(id);
+  const T = TRANSLATIONS[currentLang];
+  if (!T) return;
+  const titleMap = {dashboard:'title-dashboard',discovery:'title-discovery',archive:'title-archive',reports:'title-reports',map:'title-map',settings:'title-settings'};
+  if (titleMap[id]) {
+    document.getElementById('header-title').textContent = 'ARCHEO-IOT // ' + T[titleMap[id]];
+  }
+};
+
+// Patch renderArchive to translate success/warning labels
+const _origRenderArchive = renderArchive;
+window.renderArchive = function() {
+  _origRenderArchive();
+  // Translate success/warning badges
+  document.querySelectorAll('.arc-badge').forEach(el => {
+    if (el.textContent.includes('УСПЕХ') || el.textContent.includes('SUCCESS')) {
+      el.textContent = t('arc-success');
+    } else if (el.textContent.includes('ВНИМАНИЕ') || el.textContent.includes('WARNING')) {
+      el.textContent = t('arc-warning');
+    }
+  });
+  // Translate archive stats
+  const statsEl = document.getElementById('archive-stats');
+  if (statsEl) {
+    const succ = archiveData.filter(a=>a.outcome==='success').length;
+    const warn = archiveData.filter(a=>a.outcome==='warning').length;
+    const avgDrop = (archiveData.reduce((acc,a)=>acc+(a.startTds-a.endTds),0)/archiveData.length).toFixed(1);
+    statsEl.innerHTML = [
+      {label:t('arc-stat-completed'), val:succ, color:'var(--green)'},
+      {label:t('arc-stat-warnings'),  val:warn, color:'var(--yellow)'},
+      {label:t('arc-stat-avg-drop'),  val:avgDrop+' ppt', color:'var(--cyan)'},
+      {label:t('arc-stat-total'),     val:archiveData.length, color:'var(--red)'},
+    ].map(s=>`
+      <div style="background:var(--bg2);border:1px solid var(--border);padding:14px">
+        <div style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;font-weight:bold">${s.label}</div>
+        <div style="font-family:var(--head);font-size:20px;font-weight:900;color:${s.color}">${s.val}</div>
+      </div>`).join('');
+  }
+};
+
+// Patch renderSysInfo for AI label
+const _origRenderSysInfo = renderSysInfo;
+window.renderSysInfo = function() {
+  _origRenderSysInfo();
+  // Update AI label
+  const sysInfoEl = document.getElementById('sys-info');
+  if (sysInfoEl) {
+    sysInfoEl.querySelectorAll('div > div:last-child').forEach(el => {
+      if (el.textContent === 'Без AI' || el.textContent === 'No AI') {
+        el.textContent = t('sys-ai');
+      }
+    });
+  }
+};
+</script>
+</body>
+</html>
