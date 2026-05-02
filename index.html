@@ -39,6 +39,79 @@
     display: flex;
   }
 
+  /* ── LOGIN SCREEN ── */
+  #login-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .login-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 30px;
+    width: 100%;
+    max-width: 360px;
+    position: relative;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+  }
+  .login-logo {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .login-diamond {
+    width: 48px; height: 48px;
+    border: 2px solid var(--yellow);
+    transform: rotate(45deg);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+  }
+  .login-diamond span { transform: rotate(-45deg); font-size: 24px; }
+  .login-title { font-family: var(--head); font-size: 24px; font-weight: 900; letter-spacing: 0.2em; color: var(--cyan); }
+  .login-sub { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; }
+  
+  .login-lang-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  
+  .login-field { margin-bottom: 16px; }
+  .login-label { display: block; font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+  .login-input {
+    width: 100%;
+    background: #000;
+    border: 1px solid var(--border);
+    color: #fff;
+    font-family: var(--font);
+    font-size: 14px;
+    padding: 10px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .login-input:focus { border-color: var(--cyan); }
+  
+  .login-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--cyan);
+    border: none;
+    color: #000;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .login-btn:hover { background: #00d2df; }
+
   /* ── LANGUAGE SWITCHER ── */
   .lang-switcher {
     display: flex;
@@ -794,195 +867,58 @@
   .lora-strip.show { display: flex; }
   .lora-val { color: #fff; }
 
+  /* ── TOAST NOTIFICATIONS ── */
+  #toast-container {
+    position: fixed;
+    bottom: 40px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+  }
+  .toast {
+    background: #0c0c14;
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    min-width: 280px;
+    max-width: 400px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    animation: slideIn 0.3s ease forwards;
+    pointer-events: auto;
+    position: relative;
+    overflow: hidden;
+    font-family: var(--font);
+    font-size: 11px;
+  }
+  .toast::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 3px;
+    background: var(--cyan);
+  }
+  .toast.success::before { background: var(--green); }
+  .toast.error::before   { background: var(--red); }
+  .toast.warning::before { background: var(--yellow); }
+
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+
   /* ── SCROLLBAR ── */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); }
-
-  /* ── LOGIN ── */
-  #login-screen {
-    position: fixed;
-    inset: 0;
-    background: radial-gradient(ellipse at center, #0a0a14 0%, #030303 70%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-    padding: 16px;
-  }
-  .login-box {
-    border: 1px solid rgba(0,242,255,0.2);
-    background: #050508;
-    padding: 40px;
-    max-width: 400px;
-    width: 100%;
-    position: relative;
-  }
-  .login-box::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(to right, transparent, var(--cyan), transparent);
-  }
-  .login-logo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 32px;
-  }
-  .login-diamond {
-    width: 56px; height: 56px;
-    border: 2px solid var(--cyan);
-    transform: rotate(45deg);
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 16px;
-    box-shadow: 0 0 20px rgba(0,242,255,0.2);
-  }
-  .login-diamond span { transform: rotate(-45deg); font-size: 22px; }
-  .login-title {
-    font-family: var(--head);
-    font-size: 20px;
-    font-weight: 900;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    color: #fff;
-  }
-  .login-sub {
-    font-size: 11px;
-    color: var(--cyan);
-    opacity: 0.85;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    margin-top: 6px;
-    text-align: center;
-  }
-  .login-field { margin-bottom: 16px; }
-  .login-label {
-    display: block;
-    font-size: 10px;
-    color: var(--cyan);
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    margin-bottom: 6px;
-    font-weight: bold;
-  }
-  .login-input {
-    width: 100%;
-    background: #050508;
-    border: 1px solid #2a2a3a;
-    color: var(--cyan);
-    font-family: var(--font);
-    font-size: 14px;
-    padding: 10px 14px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .login-input:focus { border-color: var(--cyan); }
-  .login-btn {
-    width: 100%;
-    padding: 14px;
-    background: var(--cyan);
-    border: none;
-    color: #000;
-    font-family: var(--head);
-    font-size: 11px;
-    font-weight: 900;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background 0.2s;
-    margin-top: 8px;
-  }
-  .login-btn:hover { background: #fff; }
-
-  /* ── LOGIN LANG SWITCHER ── */
-  .login-lang-row {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    margin-bottom: 24px;
-  }
-
-  /* ── COMMENT ── */
-  .comment-box {
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    padding: 10px 12px;
-    margin-bottom: 6px;
-  }
-  .comment-user { font-size: 10px; color: var(--cyan); margin-bottom: 3px; font-weight: bold; }
-  .comment-text { font-size: 11px; color: #aaa; }
-
-  .comment-input-row { display: flex; gap: 6px; margin-top: 10px; }
-  .comment-input {
-    flex: 1;
-    background: #000;
-    border: 1px solid var(--border);
-    color: #fff;
-    font-family: var(--font);
-    font-size: 10px;
-    padding: 7px 10px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .comment-input:focus { border-color: var(--cyan); }
-  .comment-send {
-    background: var(--cyan);
-    border: none;
-    color: #000;
-    padding: 7px 14px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: bold;
-    transition: background 0.2s;
-  }
-  .comment-send:hover { background: #fff; }
-  /* NOTIFICATIONS */
-  #toast-container { position:fixed; bottom:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:10px; pointer-events:none; }
-  .toast { background:var(--bg2); border:1px solid var(--cyan); border-left:4px solid var(--cyan); color:#fff; padding:12px 16px; border-radius:4px; box-shadow:0 4px 15px rgba(0,0,0,0.8); animation:slideIn 0.3s ease forwards; display:flex; gap:12px; align-items:center; min-width:250px; pointer-events:auto; font-family:'Share Tech Mono',monospace; font-size:12px; }
-  .toast.success { border-color:var(--green); }
-  .toast.error { border-color:var(--red); }
-  .toast.warning { border-color:var(--yellow); }
-  @keyframes slideIn { from{transform:translateX(120%);opacity:0;} to{transform:translateX(0);opacity:1;} }
-  @keyframes slideOut { to{transform:translateX(120%);opacity:0;} }
-  @keyframes radar { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  .radar-sweep { pointer-events: none; position: absolute; top:0; left:0; width:200%; height:200%; transform-origin:center center; z-index:2; background: conic-gradient(from 0deg at 50% 50%, rgba(0,242,255,0) 0%, rgba(0,242,255,0) 80%, rgba(0,242,255,0.2) 100%); animation: radar 4s linear infinite; left:-50%; top:-50%; }
-
-  /* THEMES */
-  body.matrix { --cyan: #00ff41; --cyan-dim: rgba(0,255,65,0.2); --yellow: #00ff41; --green: #00ff41; --red: #ff4060; --orange: #00ff41; }
-  body.matrix .page-title { color: #00ff41 !important; text-shadow:0 0 10px rgba(0,255,65,0.5); }
-  body.matrix .header-title { color: #00ff41 !important; text-shadow:0 0 8px rgba(0,255,65,0.8); }
-
-  body.amber { --cyan: #ffb000; --cyan-dim: rgba(255,176,0,0.2); --yellow: #ffb000; --green: #ffb000; --red: #ff4060; --orange: #ffb000; }
-  body.amber .page-title { color: #ffb000 !important; text-shadow:0 0 10px rgba(255,176,0,0.5); }
-  body.amber .header-title { color: #ffb000 !important; text-shadow:0 0 8px rgba(255,176,0,0.8); }
-
-  body.light {
-    --bg: #f4f4f9;
-    --bg2: #ffffff;
-    --bg3: #e8e8f0;
-    --border: #d0d0da;
-    --dim: #666;
-    color: #111;
-  }
-  body.light #sidebar, body.light #header, body.light #footer { background: var(--bg2); }
-  body.light .login-title, body.light .node-name, body.light .arc-name, body.light .artifact-name { color: #111; }
-  body.light .form-input, body.light .search-box, body.light .comment-input, body.light .login-input { background: #fff; color: #111; border-color: #ccc; }
-  body.light .search-box:focus, body.light .form-input:focus, body.light .login-input:focus { border-color: var(--cyan); }
-  body.light #login-screen { background: radial-gradient(ellipse at center, #ffffff 0%, #e0e0ea 70%); }
-  body.light .login-box { background: var(--bg2); border-color: rgba(0,0,0,0.1); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-  body.light .card { background: var(--bg2); border-color: var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-  body.light .sensor-card { background: var(--bg2); border-color: var(--border); }
-  body.light .header-title { color: #111 !important; text-shadow: none; }
-  body.light .page-title { color: #111 !important; text-shadow: none; }
-  body.light .card-title { color: #555; }
-  body.light .data-table th { color: #555; border-bottom-color: #ccc; }
-  body.light .data-table td { border-bottom-color: #eee; }
-  body.light .btn { border-color: #ccc; color: #333; }
-  body.light .btn:hover { background: #eee; }
-  body.light .badge { border-color: #ccc; color: #333; }
-  body.light .hdr-btn { border-color: #ccc; color: #555; }
 </style>
 </head>
 <body class="ocean">
@@ -1004,8 +940,6 @@
       <button class="lang-btn active" onclick="setLang('bg')" title="Български">🇧🇬<span class="lang-code">BG</span></button>
       <button class="lang-btn" onclick="setLang('en')" title="English">🇬🇧<span class="lang-code">EN</span></button>
       <button class="lang-btn" onclick="setLang('de')" title="Deutsch">🇩🇪<span class="lang-code">DE</span></button>
-      <button class="lang-btn" onclick="setLang('fr')" title="Français">🇫🇷<span class="lang-code">FR</span></button>
-      <button class="lang-btn" onclick="setLang('es')" title="Español">🇪🇸<span class="lang-code">ES</span></button>
     </div>
     <div class="login-field">
       <label class="login-label" id="lbl-operator">Идентификатор на оператор</label>
@@ -1017,7 +951,7 @@
       <input class="login-input" id="login-pw" type="password" placeholder="••••••••"
         onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <div id="login-error" style="display:none;color:var(--red);font-size:11px;text-align:center;margin-bottom:10px;padding:8px;border:1px solid rgba(255,64,96,0.3);background:rgba(255,64,96,0.08)" id="login-err-msg">⚠ Грешно потребителско име или парола</div>
+    <div id="login-error" style="display:none;color:var(--red);font-size:11px;text-align:center;margin-bottom:10px;padding:8px;border:1px solid rgba(255,64,96,0.3);background:rgba(255,64,96,0.08)">⚠ Грешно потребителско име или парола</div>
     <button class="login-btn" onclick="doLogin()" id="login-btn-text">🔐 Авторизация</button>
   </div>
 </div>
@@ -1053,8 +987,6 @@
         <button class="lang-btn active" onclick="setLang('bg')" title="Български">🇧🇬<span class="lang-code">BG</span></button>
         <button class="lang-btn" onclick="setLang('en')" title="English">🇬🇧<span class="lang-code">EN</span></button>
         <button class="lang-btn" onclick="setLang('de')" title="Deutsch">🇩🇪<span class="lang-code">DE</span></button>
-        <button class="lang-btn" onclick="setLang('fr')" title="Français">🇫🇷<span class="lang-code">FR</span></button>
-        <button class="lang-btn" onclick="setLang('es')" title="Español">🇪🇸<span class="lang-code">ES</span></button>
       </div>
     </div>
   </div>
@@ -1500,6 +1432,7 @@
 // ══════════════════════════════════════════════════════════
 // TRANSLATIONS
 // ══════════════════════════════════════════════════════════
+emailjs.init("vGXwCXxC-2FG2YLXb");
 const LANGS = {
   bg: {
     flag: '🇧🇬', name: 'Български',
@@ -1604,7 +1537,7 @@ const LANGS = {
     'lbl-reconnect-set': 'Reconnect',
     'lbl-reconnect-val': '5 сек',
     'lbl-mat-matrix': 'Матрица на Материалите',
-    'th-material': 'Материал',
+    'th-material': 'Material',
     'th-mix': 'Микс',
     'th-target': 'Цел TDS',
     'th-cycle': 'Цикъл',
@@ -1649,6 +1582,19 @@ const LANGS = {
     'btn-save-notif': '💾 Запази',
     'btn-test-notif': '✉ Тест',
     'lbl-notif-status': 'Системата ще изпраща имейл при критични нива или загуба на връзка.',
+    'notif-offline-sub': 'ASOA: Връзката е прекъсната',
+    'notif-offline-body': 'Връзката с ESP възела беше прекъсната в {time}',
+    'notif-critical-sub': 'ASOA: Критично ниво на водата!',
+    'notif-critical-body': 'Внимание! Нивото на водата достигна {wl}% в {time}.',
+    'notif-test-sub': 'ASOA Тестово Известие',
+    'notif-test-body': 'Това е тестов имейл от системата ASOA за проверка на конфигурацията.',
+    'notif-success-msg': 'Известието е изпратено по имейл',
+    'notif-err-invalid': 'Моля въведете валиден имейл!',
+    'notif-success-save': 'Имейлът е запазен успешно',
+    'notif-warn-no-email': 'Първо въведете и запазете имейл!',
+    'notif-info-test': 'Тестово известие е инициирано',
+    'toast-art-deleted': 'Артефактът е изтрит',
+    'toast-changes-saved': 'Измененията са запазени',
     // Status
     'status-online': 'ОНЛАЙН',
     'status-offline': 'ОФЛАЙН',
@@ -1664,6 +1610,7 @@ const LANGS = {
     'nav-logout': 'Излез',
     'btn-new-artifact': '+ Нов артефакт',
     'map-points': 'точки',
+    'GLASS': 'СТЪКЛО', 'CERAMIC': 'КЕРАМИКА', 'STONE': 'КАМЪК', 'METAL': 'МЕТАЛ', 'WOOD': 'ДЪРВО',
     'lbl-notif-set': 'Настройки на известия',
     'lbl-notif-email': 'Имейл за известия',
     'btn-save-notif': '💾 Запази',
@@ -1803,6 +1750,19 @@ const LANGS = {
     'btn-save-notif': '💾 Save',
     'btn-test-notif': '✉ Test',
     'lbl-notif-status': 'The system will send an email on critical levels or connection loss.',
+    'notif-offline-sub': 'ASOA: Connection Lost',
+    'notif-offline-body': 'Connection with ESP node was lost at {time}',
+    'notif-critical-sub': 'ASOA: Critical Water Level!',
+    'notif-critical-body': 'Warning! Water level reached {wl}% at {time}.',
+    'notif-test-sub': 'ASOA Test Notification',
+    'notif-test-body': 'This is a test email from the ASOA system to verify the configuration.',
+    'notif-success-msg': 'Notification sent via email',
+    'notif-err-invalid': 'Please enter a valid email!',
+    'notif-success-save': 'Email saved successfully',
+    'notif-warn-no-email': 'First enter and save an email!',
+    'notif-info-test': 'Test notification initiated',
+    'toast-art-deleted': 'Artifact deleted',
+    'toast-changes-saved': 'Changes saved',
     'status-online': 'ONLINE',
     'status-offline': 'OFFLINE',
     'confirm-delete': 'Delete',
@@ -1815,7 +1775,6 @@ const LANGS = {
     'nav-logout': 'Logout',
     'btn-new-artifact': '+ New Artifact',
     'map-points': 'points',
-    // Artifacts & Materials
     'Глина': 'Clay', 'Бронз': 'Bronze', 'Керамика': 'Ceramic', 'Желязо': 'Iron', 'Стъкло': 'Glass', 'Камък': 'Stone', 'Олово': 'Lead',
     'Керамичен Питос': 'Ceramic Pithos', 'Римски Секстант': 'Roman Sextant', 'Амфора - Фрагмент': 'Amphora - Fragment',
     'Железен Накрайник': 'Iron Spearhead', 'Стъклена Флакончета': 'Glass Vials', 'Каменна Плочка': 'Stone Tablet',
@@ -1894,7 +1853,7 @@ const LANGS = {
     'no-artifacts': 'Keine Artefakte gefunden',
     'all': 'ALLE',
     'matGlass': '🔷 Glas', 'matCeramic': '🏺 Keramik', 'matStone': '🪨 Stein', 'matMetal': '⚔️ Metall', 'matWood': '🪵 Holz',
-    'matGlassShort': 'Glas','matCeramicShort': 'Keramik','matStoneShort': 'Stein','matMetalShort': 'Metall','matWoodShort': 'Holz',
+    'matGlassShort': 'Glas','matCeramicShort': 'Keramik','matStoneShort': 'Stein','matMetalShort': 'Metal','matWoodShort': 'Holz',
     'lbl-language': 'Sprache',
     'lbl-completed-archive': 'Abgeschlossene Projekte',
     'arc-completed': 'Abgeschlossen',
@@ -1919,7 +1878,7 @@ const LANGS = {
     'btn-reconnect': '🔄 Verbinden',
     'lbl-status-set': 'Status',
     'lbl-data-set': 'Daten',
-    'lbl-interval-set': 'Intervall',
+    'lbl-interval-set': 'Intervalle',
     'lbl-interval-val': '3 Sek',
     'lbl-reconnect-set': 'Reconnect',
     'lbl-reconnect-val': '5 Sek',
@@ -1951,7 +1910,7 @@ const LANGS = {
     'add-modal-edit': '✏ Bearbeiten',
     'art-mat': 'Material','art-disc': 'Entdecker','art-gps': 'GPS','art-date': 'Datum',
     'art-proto': 'Protokoll','art-target': 'Ziel-TDS',
-    'art-comments': 'Kommentare',
+    'art-comments': 'Коментари',
     'no-comments': 'Keine Kommentare',
     'comment-ph': 'Kommentar hinzufügen...',
     'btn-edit-art': '✏ Bearbeiten',
@@ -1971,338 +1930,38 @@ const LANGS = {
     'node-primary-tank': 'Haupttank',
     'node-dashboard': 'Übersicht',
     'nav-logout': 'Abmelden',
-    'btn-new-artifact': '+ Neues Artefakt',
+    'btn-new-artifact': '+ Neues Artefact',
     'map-points': 'Punkte',
+    'GLASS': 'GLAS', 'CERAMIC': 'KERAMIK', 'STONE': 'STEIN', 'METAL': 'METALL', 'WOOD': 'HOLZ',
+    'notif-offline-sub': 'ASOA: Verbindung verloren',
+    'notif-offline-body': 'Die Verbindung zum ESP-Knoten wurde um {time} unterbrochen',
+    'notif-critical-sub': 'ASOA: Kritischer Wasserstand!',
+    'notif-critical-body': 'Warnung! Der Wasserstand hat um {time} {wl}% erreicht.',
+    'notif-test-sub': 'ASOA Testbenachrichtigung',
+    'notif-test-body': 'Dies ist eine Test-E-Mail vom ASOA-System, um die Konfiguration zu überprüfen.',
+    'notif-success-msg': 'Benachrichtigung per E-Mail gesendet',
+    'notif-err-invalid': 'Bitte geben Sie eine gültige E-Mail-Adresse ein!',
+    'notif-success-save': 'E-Mail erfolgreich gespeichert',
+    'notif-warn-no-email': 'Geben Sie zuerst eine E-Mail-Adresse ein und speichern Sie diese!',
+    'notif-info-test': 'Testbenachrichtigung initiiert',
+    'toast-art-deleted': 'Artefakt gelöscht',
+    'toast-changes-saved': 'Änderungen gespeichert',
     'Глина': 'Ton', 'Бронз': 'Bronze', 'Керамика': 'Keramik', 'Желязо': 'Eisen', 'Стъкло': 'Glas', 'Камък': 'Stein', 'Олово': 'Blei',
     'Керамичен Питос': 'Keramik-Pithos', 'Римски Секстант': 'Römischer Sextant', 'Амфора - Фрагмент': 'Amphore - Fragment',
     'Железен Накрайник': 'Eiserne Speerspitze', 'Стъклена Флакончета': 'Glasfläschchen', 'Каменна Плочка': 'Steintafel',
     'Бронзова Фибула': 'Bronzefibel', 'Керамична Лампа': 'Keramiklampe', 'Стъклено Шише': 'Glasflasche', 'Оловна Котва': 'Bleianker',
     'Отличен образец.': 'Ausgezeichnetes Exemplar.', 'Успешно завършена десалинация.': 'Entsalzung erfolgreich abgeschlossen.',
     'Плато на ден 14.': 'Plateau an Tag 14.', 'Пукнатина при ден 21.': 'Riss an Tag 21.', 'NaOH обработка — отличен резултат.': 'NaOH-Behandlung — hervorragendes Ergebnis.',
-    'Използван за съхранение на зърно и зехтин през античността. Открит край древен търговски кораб.': 'Diente in der Antike zur Lagerung von Getreide und Olivenöl. Gefunden in der Nähe eines alten Handelsschiffs.',
-    'Рядък навигационен уред, вероятно потънал по време на буря край остров Св. Иван.': 'Ein seltenes Navigationsgerät, das wahrscheinlich während eines Sturms bei der Insel St. Ivan gesunken ist.',
+    'Използван за съхранение на зърно und зехтин през античността. Открит край древен търговски кораб.': 'Diente in der Antike zur Lagerung von Getreide und Olivenöl. Gefunden in der Nähe eines alten Handelsschiffs.',
+    'Рядък навигационен уред, вероятно потънал по време на буря край остров Св. Иван.': 'Ein rares Navigationsgerät, das wahrscheinlich während eines Sturms bei der Insel St. Ivan gesunken ist.',
     'Класическа гръцка амфора за вино, открита полузаровена в пясъка край Черноморец.': 'Klassische griechische Weinamphore, halb im Sand bei Tschernomorez begraben gefunden.',
     'Оръжие от късното средновековие, намерено в залива на Бургас, свидетелство за морска битка.': 'Spätmittelalterliche Waffe, gefunden im Golf von Burgas, Zeugnis einer Seeschlacht.',
     'Изящен съд за парфюм от римската епоха, напълно запазен въпреки вековете под водата.': 'Exquisites römisches Parfümgefäß, das trotz jahrhundertelanger Wasserlagerung perfekt erhalten ist.',
-    'Част от храм или обществена сграда с частично запазен древногръцки надпис.': 'Teil eines Tempels oder öffentlichen Gebäudes mit einer teilweise erhaltenen altgriechischen Inschrift.',
+    'Част от храм или обществена сграда с teilweise erhaltenen altgriechischen Inschrift.': 'Teil eines Tempels oder öffentlichen Gebäudes mit einer teilweise erhaltenen altgriechischen Inschrift.',
     'Древна тракийска или римска брошка, използвана за защипване на наметала.': 'Eine alte thrakische oder römische Brosche, die zum Befestigen von Umhängen verwendet wurde.',
     'Маслена лампа, осветявала пътя на моряци преди повече от две хилядолетия.': 'Öllampe, die den Seeleuten vor mehr als zwei Jahrtausenden den Weg beleuchtete.',
-    'Средновековен съд за вносни течности, покрит с красива патина от морската вода.': 'Mittelalterliches Gefäß für importierte Flüssigkeiten, bedeckt mit einer wunderschönen Patina aus dem Meerwasser.',
+    'Средновековен съд за вносни течности, покрит mit einer wunderschönen Patina aus dem Meerwasser.': 'Mittelalterliches Gefäß für importierte Flüssigkeiten, bedeckt mit einer wunderschönen Patina aus dem Meerwasser.',
     'Тежка антична котва от дървен кораб, разбивал се в подводните скали.': 'Schwerer antiker Anker eines Holzschiffes, das an Unterwasserfelsen zerschellte.',
-  },
-
-  fr: {
-    flag: '🇫🇷', name: 'Français',
-    'login-sub': 'Protocole de sécurité Alpha-9',
-    'lbl-operator': 'Identifiant opérateur',
-    'lbl-access': 'Hash d\'accès',
-    'login-err': '⚠ Nom d\'utilisateur ou mot de passe incorrect',
-    'login-btn': '🔐 Autorisation',
-    'btn-csv': '⬇ CSV',
-    'btn-emstop': '⛔ ARRÊT D\'URGENCE',
-    'nav-dashboard': 'TERMINAL',
-    'nav-discovery': 'ARCHIVE',
-    'nav-archive': 'HISTORIQUE',
-    'nav-reports': 'RAPPORTS',
-    'nav-map': 'CARTE',
-    'nav-settings': 'CONFIG',
-    'esp-online': 'ESP CONNECTÉ',
-    'esp-offline': 'ESP HORS LIGNE',
-    'banner-title': 'ESP hors ligne — aucune donnée capteur',
-    'lbl-phase-title': 'Phase du processus',
-    'lbl-prediction': 'Prédiction',
-    'pred-no-data': 'Données insuffisantes pour la prédiction',
-    'pred-no-fall': 'TDS ne baisse pas — vérifier capteur',
-    'pred-reached': 'TDS cible atteint!',
-    'lbl-tds': 'Salinité (TDS)',
-    'lbl-ec': 'Conductivité (EC)',
-    'lbl-temp': 'Température',
-    'lbl-wl': 'Niveau d\'eau',
-    'lbl-chart-title': 'Dynamique de désalinisation',
-    'lbl-hw-control': 'Contrôle matériel',
-    'auto-label': 'Mode Auto',
-    'auto-desc': 'Le système gère automatiquement les vannes selon le TDS',
-    'lbl-r1': '💧 Pompe de drainage',
-    'lbl-r2': '🌊 Vanne eau de mer',
-    'lbl-r3': '🔄 Vanne eau douce',
-    'lbl-active-proto': 'Protocole actif',
-    'lbl-plateau-analysis': 'Analyse de plateau',
-    'lbl-node-status': 'Statut du nœud',
-    'lbl-mode-node': 'Mode',
-    'lbl-data-node': 'Données',
-    'lbl-points': 'points',
-    'lbl-session-node': 'Session',
-    'lbl-version-node': 'Version',
-    'phase0': 'Trempage',
-    'phase1': 'Actif',
-    'phase2': 'Plateau',
-    'phase3': 'Finalisation',
-    'phase-names': ['Trempage','Désalinisation active','Plateau','Finalisation'],
-    'pred-days': 'Jours restants',
-    'pred-date': 'Date prévue',
-    'pred-rate': 'Chute TDS/jour',
-    'pred-conf': 'Précision',
-    'pred-accuracy-badge': '% PRÉCISION',
-    'plateau-target-tpl': 'Cible: {target} ppt // Δ < 1% sur 21 jours',
-    'plateau-done': '✓ PLATEAU',
-    'lbl-digital-archive': 'Archive numérique',
-    'btn-new-artifact': '+ Nouvel artefact',
-    'art-search-ph': 'Rechercher...',
-    'no-artifacts': 'Aucun artefact trouvé',
-    'all': 'TOUS',
-    'matGlass': '🔷 Verre', 'matCeramic': '🏺 Céramique', 'matStone': '🪨 Pierre', 'matMetal': '⚔️ Métal', 'matWood': '🪵 Bois',
-    'matGlassShort': 'Verre','matCeramicShort': 'Céramique','matStoneShort': 'Pierre','matMetalShort': 'Métal','matWoodShort': 'Bois',
-    'lbl-language': 'Langue',
-    'lbl-completed-archive': 'Archive des projets terminés',
-    'arc-completed': 'Terminés',
-    'arc-warnings': 'Avertissements',
-    'arc-avg-drop': 'Baisse TDS moy.',
-    'arc-total': 'Total artefacts',
-    'arc-success': '✓ SUCCÈS',
-    'arc-warning': '⚠ ATTENTION',
-    'lbl-reports-title': 'Système de rapports',
-    'lbl-live-log': 'Journal capteur en direct',
-    'th-time': 'Heure',
-    'th-level': 'Niveau (%)',
-    'th-temp': 'Temp (°C)',
-    'awaiting-data': 'En attente de données...',
-    'lbl-reports-by-artifact': 'Rapports par artefact',
-    'btn-report': '⬇ Rapport',
-    'lbl-map-title': 'Carte sonar',
-    'map-points': 'points',
-    'lbl-config-title': 'Configuration',
-    'lbl-esp-conn': 'Connexion ESP',
-    'lbl-ws-addr': 'Adresse WebSocket',
-    'btn-reconnect': '🔄 Connecter',
-    'lbl-status-set': 'Statut',
-    'lbl-data-set': 'Données',
-    'lbl-interval-set': 'Intervalle',
-    'lbl-interval-val': '3 sec',
-    'lbl-reconnect-set': 'Reconnexion',
-    'lbl-reconnect-val': '5 sec',
-    'lbl-mat-matrix': 'Matrice des matériaux',
-    'th-material': 'Matériau',
-    'th-mix': 'Mélange',
-    'th-target': 'TDS cible',
-    'th-cycle': 'Cycle',
-    'th-status': 'Statut',
-    'matrix-active': '● ACTIF',
-    'matrix-standby': '○ VEILLE',
-    'lbl-sys-info': 'Info système',
-    'sys-version': 'Version',
-    'sys-operator': 'Opérateur',
-    'sys-protocol': 'Protocole',
-    'lbl-photo': 'Photo',
-    'lbl-choose-photo': '📷 Choisir une photo',
-    'lbl-photo-hint': 'JPG, PNG jusqu\'à 2Mo — ou choisir icône ci-dessous',
-    'lbl-icon-fallback': 'Icône (si pas de photo)',
-    'lbl-field-id': 'ID',
-    'lbl-field-name': 'Nom',
-    'lbl-field-mat': 'Matériau',
-    'lbl-field-disc': 'Découvreur',
-    'lbl-field-date': 'Date',
-    'lbl-field-proto': 'Protocole',
-    'save-art-btn': '✓ Ajouter l\'artefact',
-    'btn-cancel-add': 'Annuler',
-    'add-modal-new': '+ Nouvel artefact',
-    'add-modal-edit': '✏ Modifier',
-    'art-mat': 'Matériau','art-disc': 'Découvreur','art-gps': 'GPS','art-date': 'Date',
-    'art-proto': 'Protocole','art-target': 'TDS cible',
-    'art-comments': 'Commentaires',
-    'no-comments': 'Aucun commentaire',
-    'comment-ph': 'Ajouter commentaire...',
-    'btn-edit-art': '✏ Modifier',
-    'btn-like': '❤',
-    'btn-delete': '🗑 Supprimer',
-    'arc-tds-journey': 'Parcours TDS',
-    'arc-start': 'DÉBUT ppt',
-    'arc-end': 'FIN ppt',
-    'arc-reduction': 'Réduction',
-    'status-online': 'EN LIGNE',
-    'status-offline': 'HORS LIGNE',
-    'confirm-delete': 'Supprimer',
-    'confirm-exists': 'ID déjà existant!',
-    'confirm-too-big': 'Photo trop grande! Max 2Mo.',
-    'confirm-required': 'Remplissez tous les champs obligatoires!',
-    'footer-days': 'jours',
-    'node-primary-tank': 'Réservoir principal',
-    'node-dashboard': 'Tableau de bord',
-    'nav-logout': 'Déconnexion',
-    'btn-new-artifact': '+ Nouvel Artefact',
-    'map-points': 'points',
-    'Глина': 'Argile', 'Бронз': 'Bronze', 'Керамика': 'Céramique', 'Желязо': 'Fer', 'Стъкло': 'Verre', 'Камък': 'Pierre', 'Олово': 'Plomb',
-    'Керамичен Питос': 'Pithos en céramique', 'Римски Секстант': 'Sextant romain', 'Амфора - Фрагмент': 'Amphore - Fragment',
-    'Железен Накрайник': 'Pointe de lance en fer', 'Стъклена Флакончета': 'Flacons en verre', 'Каменна Плочка': 'Tablette de pierre',
-    'Бронзова Фибула': 'Fibule en bronze', 'Керамична Лампа': 'Lampe en céramique', 'Стъклено Шише': 'Bouteille en verre', 'Оловна Котва': 'Ancre en plomb',
-    'Отличен образец.': 'Excellent spécimen.', 'Успешно завършена десалинация.': 'Désalinisation terminée avec succès.',
-    'Плато на ден 14.': 'Plateau le 14ème jour.', 'Пукнатина при ден 21.': 'Fissure le 21ème jour.', 'NaOH обработка — отличен резултат.': 'Traitement NaOH — excellent résultat.',
-    'Използван за съхранение на зърно и зехтин през античността. Открит край древен търговски кораб.': 'Utilisé pour stocker les céréales et l\'huile d\'olive dans l\'Antiquité. Trouvé près d\'un ancien navire marchand.',
-    'Рядък навигационен уред, вероятно потънал по време на буря край остров Св. Иван.': 'Un appareil de navigation rare, probablement coulé lors d\'une tempête près de l\'île de Saint-Ivan.',
-    'Класическа гръцка амфора за вино, открита полузаровена в пясъка край Черноморец.': 'Amphore à vin grecque classique, trouvée à moitié enfouie dans le sable près de Tchernomorets.',
-    'Оръжие от късното средновековие, намерено в залива на Бургас, свидетелство за морска битка.': 'Arme de la fin du Moyen Âge trouvée dans le golfe de Bourgas, preuve d\'une bataille navale.',
-    'Изящен съд за парфюм от римската епоха, напълно запазен въпреки вековете под водата.': 'Récipient à parfum romain exquis, parfaitement conservé malgré des siècles passés sous l\'eau.',
-    'Част от храм или обществена сграда с частично запазен древногръцки надпис.': 'Une partie d\'un temple ou d\'un bâtiment public avec une inscription grecque antique partiellement conservée.',
-    'Древна тракийска или римска брошка, използвана за защипване на наметала.': 'Ancienne broche thrace ou romaine, utilisée pour attacher les manteaux.',
-    'Маслена лампа, осветявала пътя на моряци преди повече от две хилядолетия.': 'Lampe à huile qui éclairait le chemin des marins il y a plus de deux millénaires.',
-    'Средновековен съд за вносни течности, покрит с красива патина от морската вода.': 'Récipient médiéval pour les liquides importés, recouvert d\'une belle patine de l\'eau de mer.',
-    'Тежка антична котва от дървен кораб, разбивал се в подводните скали.': 'Lourde ancre antique provenant d\'un navire en bois qui s\'est écrasé sur les rochers sous-marins.',
-  },
-
-  es: {
-    flag: '🇪🇸', name: 'Español',
-    'login-sub': 'Protocolo de seguridad Alfa-9',
-    'lbl-operator': 'Identificador de operador',
-    'lbl-access': 'Hash de acceso',
-    'login-err': '⚠ Usuario o contraseña incorrectos',
-    'login-btn': '🔐 Autorización',
-    'btn-csv': '⬇ CSV',
-    'btn-emstop': '⛔ PARADA DE EMERGENCIA',
-    'nav-dashboard': 'TERMINAL',
-    'nav-discovery': 'ARCHIVO',
-    'nav-archive': 'HISTORIAL',
-    'nav-reports': 'INFORMES',
-    'nav-map': 'MAPA',
-    'nav-settings': 'CONFIG',
-    'esp-online': 'ESP CONECTADO',
-    'esp-offline': 'ESP SIN CONEXIÓN',
-    'banner-title': 'ESP sin conexión — sin datos de sensor',
-    'lbl-phase-title': 'Fase del proceso',
-    'lbl-prediction': 'Predicción',
-    'pred-no-data': 'Datos insuficientes para la predicción',
-    'pred-no-fall': 'TDS no baja — verificar sensor',
-    'pred-reached': '¡TDS objetivo alcanzado!',
-    'lbl-tds': 'Salinidad (TDS)',
-    'lbl-ec': 'Conductividad (EC)',
-    'lbl-temp': 'Temperatura',
-    'lbl-wl': 'Nivel de agua',
-    'lbl-chart-title': 'Dinámica de desalinización',
-    'lbl-hw-control': 'Control de hardware',
-    'auto-label': 'Modo Auto',
-    'auto-desc': 'El sistema gestiona válvulas automáticamente según TDS',
-    'lbl-r1': '💧 Bomba de drenaje',
-    'lbl-r2': '🌊 Válvula agua salada',
-    'lbl-r3': '🔄 Válvula agua dulce',
-    'lbl-active-proto': 'Protocolo activo',
-    'lbl-plateau-analysis': 'Análisis de meseta',
-    'lbl-node-status': 'Estado del nodo',
-    'lbl-mode-node': 'Modo',
-    'lbl-data-node': 'Datos',
-    'lbl-points': 'puntos',
-    'lbl-session-node': 'Sesión',
-    'lbl-version-node': 'Versión',
-    'phase0': 'Remojo',
-    'phase1': 'Activo',
-    'phase2': 'Meseta',
-    'phase3': 'Finalización',
-    'phase-names': ['Remojo','Desalinización activa','Meseta','Finalización'],
-    'pred-days': 'Días restantes',
-    'pred-date': 'Fecha esperada',
-    'pred-rate': 'Caída TDS/día',
-    'pred-conf': 'Precisión',
-    'pred-accuracy-badge': '% PRECISIÓN',
-    'plateau-target-tpl': 'Objetivo: {target} ppt // Δ < 1% en 21 días',
-    'plateau-done': '✓ MESETA',
-    'lbl-digital-archive': 'Archivo digital',
-    'btn-new-artifact': '+ Nuevo artefacto',
-    'art-search-ph': 'Buscar...',
-    'no-artifacts': 'No se encontraron artefactos',
-    'all': 'TODOS',
-    'matGlass': '🔷 Vidrio', 'matCeramic': '🏺 Cerámica', 'matStone': '🪨 Piedra', 'matMetal': '⚔️ Metal', 'matWood': '🪵 Madera',
-    'matGlassShort': 'Vidrio','matCeramicShort': 'Cerámica','matStoneShort': 'Piedra','matMetalShort': 'Metal','matWoodShort': 'Madera',
-    'lbl-language': 'Idioma',
-    'lbl-completed-archive': 'Archivo de proyectos completados',
-    'arc-completed': 'Completados',
-    'arc-warnings': 'Advertencias',
-    'arc-avg-drop': 'Caída TDS prom.',
-    'arc-total': 'Total artefactos',
-    'arc-success': '✓ ÉXITO',
-    'arc-warning': '⚠ ATENCIÓN',
-    'lbl-reports-title': 'Sistema de informes',
-    'lbl-live-log': 'Registro de sensores en vivo',
-    'th-time': 'Hora',
-    'th-level': 'Nivel (%)',
-    'th-temp': 'Temp (°C)',
-    'awaiting-data': 'Esperando datos...',
-    'lbl-reports-by-artifact': 'Informes por artefacto',
-    'btn-report': '⬇ Informe',
-    'lbl-map-title': 'Mapa sonar',
-    'map-points': 'puntos',
-    'lbl-config-title': 'Configuración',
-    'lbl-esp-conn': 'Conexión ESP',
-    'lbl-ws-addr': 'Dirección WebSocket',
-    'btn-reconnect': '🔄 Conectar',
-    'lbl-status-set': 'Estado',
-    'lbl-data-set': 'Datos',
-    'lbl-interval-set': 'Intervalo',
-    'lbl-interval-val': '3 seg',
-    'lbl-reconnect-set': 'Reconexión',
-    'lbl-reconnect-val': '5 seg',
-    'lbl-mat-matrix': 'Matriz de materiales',
-    'th-material': 'Material',
-    'th-mix': 'Mezcla',
-    'th-target': 'TDS objetivo',
-    'th-cycle': 'Ciclo',
-    'th-status': 'Estado',
-    'matrix-active': '● ACTIVO',
-    'matrix-standby': '○ ESPERA',
-    'lbl-sys-info': 'Info del sistema',
-    'sys-version': 'Versión',
-    'sys-operator': 'Operador',
-    'sys-protocol': 'Protocolo',
-    'lbl-photo': 'Foto',
-    'lbl-choose-photo': '📷 Elegir foto',
-    'lbl-photo-hint': 'JPG, PNG hasta 2MB — o elegir icono abajo',
-    'lbl-icon-fallback': 'Icono (si no hay foto)',
-    'lbl-field-id': 'ID',
-    'lbl-field-name': 'Nombre',
-    'lbl-field-mat': 'Material',
-    'lbl-field-disc': 'Descubridor',
-    'lbl-field-date': 'Fecha',
-    'lbl-field-proto': 'Protocolo',
-    'save-art-btn': '✓ Agregar artefacto',
-    'btn-cancel-add': 'Cancelar',
-    'add-modal-new': '+ Nuevo artefacto',
-    'add-modal-edit': '✏ Editar',
-    'art-mat': 'Material','art-disc': 'Descubridor','art-gps': 'GPS','art-date': 'Fecha',
-    'art-proto': 'Protocolo','art-target': 'TDS objetivo',
-    'art-comments': 'Comentarios',
-    'no-comments': 'Sin comentarios',
-    'comment-ph': 'Agregar comentario...',
-    'btn-edit-art': '✏ Editar',
-    'btn-like': '❤',
-    'btn-delete': '🗑 Eliminar',
-    'arc-tds-journey': 'Recorrido TDS',
-    'arc-start': 'INICIO ppt',
-    'arc-end': 'FIN ppt',
-    'arc-reduction': 'Reducción',
-    'status-online': 'EN LÍNEA',
-    'status-offline': 'DESCONECTADO',
-    'confirm-delete': 'Eliminar',
-    'confirm-exists': '¡ID ya existe!',
-    'confirm-too-big': '¡Foto demasiado grande! Máx 2MB.',
-    'confirm-required': '¡Complete todos los campos obligatorios!',
-    'footer-days': 'días',
-    'node-primary-tank': 'Tanque principal',
-    'node-dashboard': 'Panel de control',
-    'nav-logout': 'Cerrar sesión',
-    'btn-new-artifact': '+ Nuevo Artefacto',
-    'map-points': 'puntos',
-    'Глина': 'Arcilla', 'Бронз': 'Bronce', 'Керамика': 'Cerámica', 'Желязо': 'Hierro', 'Стъкло': 'Vidrio', 'Камък': 'Piedra', 'Олово': 'Plomo',
-    'Керамичен Питос': 'Pithos de cerámica', 'Римски Секстант': 'Sextante romano', 'Амфора - Фрагмент': 'Ánfora - Fragmento',
-    'Железен Накрайник': 'Punta de lanza de hierro', 'Стъклена Флакончета': 'Frascos de vidrio', 'Каменна Плочка': 'Tableta de piedra',
-    'Бронзова Фибула': 'Fíbula de bronce', 'Керамична Лампа': 'Lámpara de cerámica', 'Стъклено Шише': 'Botella de vidrio', 'Оловна Котва': 'Ancla de plomo',
-    'Отличен образец.': 'Excelente espécimen.', 'Успешно завършена десалинация.': 'Desalinización completada con éxito.',
-    'Плато на ден 14.': 'Meseta en el día 14.', 'Пукнатина при ден 21.': 'Grieta en el día 21.', 'NaOH обработка — отличен резултат.': 'Tratamiento NaOH — excelente resultado.',
-    'Използван за съхранение на зърно и зехтин през античността. Открит край древен търговски кораб.': 'Se usaba para almacenar grano y aceite de oliva en la antigüedad. Encontrado cerca de un antiguo barco mercante.',
-    'Рядък навигационен уред, вероятно потънал по време на буря край остров Св. Иван.': 'Un dispositivo de navegación raro, probablemente hundido durante una tormenta cerca de la isla de San Iván.',
-    'Класическа гръцка амфора за вино, открита полузаровена в пясъка край Черноморец.': 'Anfora de vino griega clásica, encontrada semi enterrada en la arena cerca de Chernomorets.',
-    'Оръжие от късното средновековие, намерено в залива на Бургас, свидетелство за морска битка.': 'Arma tardomedieval encontrada en el golfo de Burgas, evidencia de una batalla naval.',
-    'Изящен съд за парфюм от римската епоха, напълно запазен въпреки вековете под водата.': 'Exquisito recipiente de perfume romano, perfectamente conservado a pesar de los siglos bajo el agua.',
-    'Част от храм или обществена сграда с частично запазен древногръцки надпис.': 'Parte de un templo o edificio público con una inscripción griega antigua parcialmente conservada.',
-    'Древна тракийска или римска брошка, използвана за защипване на наметала.': 'Antiguo broche tracio o romano, utilizado para abrochar capas.',
-    'Маслена лампа, осветявала пътя на моряци преди повече от две хилядолетия.': 'Lámpara de aceite que iluminó el camino de los marineros hace más de dos milenios.',
-    'Средновековен съд за вносни течности, покрит с красива патина от морската вода.': 'Recipiente medieval para líquidos importados, cubierto por una hermosa pátina del agua de mar.',
-    'Тежка антична котва от дървен кораб, разбивал се в подводните скали.': 'Ancla antigua pesada de un barco de madera que se estrelló contra las rocas submarinas.',
   },
 };
 
@@ -2691,7 +2350,7 @@ function initAll() {
 // ─── CLOCK ─────────────────────────────────────────────────────────────────────
 function updateClock() {
   const now = new Date();
-  const localeMap = { bg:'bg-BG', en:'en-GB', de:'de-DE', fr:'fr-FR', es:'es-ES' };
+  const localeMap = { bg:'bg-BG', en:'en-GB', de:'de-DE' };
   const loc = localeMap[currentLang] || 'bg-BG';
   document.getElementById('footer-coords').textContent =
     '43.2046°N 27.9105°E // ' + now.toLocaleTimeString(loc);
@@ -2712,7 +2371,6 @@ let mqttClient = null;
 
 function connectWS(url) {
   document.getElementById('ws-url-label').textContent = 'MQTT: broker.hivemq.com // topic: ' + MQTT_TOPIC;
-  // will be refreshed by applyTranslations via ws-url-label key below
 
   if (mqttClient) { try { mqttClient.end(); } catch(e){} }
 
@@ -2749,7 +2407,9 @@ function connectWS(url) {
       updatePrediction();
       updateReportTable();
       if (row.wl > 95) {
-          NotificationManager.send('ASOA: Критично ниво на водата!', `Внимание! Нивото на водата достигна ${row.wl}% в ${row.time}.`);
+          const sub = t('notif-critical-sub');
+          const body = t('notif-critical-body').replace('{wl}', row.wl).replace('{time}', row.time);
+          NotificationManager.send(sub, body);
       }
     } catch(e) {}
   });
@@ -2792,7 +2452,9 @@ function setEspStatus(online) {
   });
 
   if (wasOnline && !online) {
-      NotificationManager.send('ASOA: Връзката е прекъсната', 'Връзката с ESP възела беше прекъсната в ' + new Date().toLocaleTimeString());
+      const sub = t('notif-offline-sub');
+      const body = t('notif-offline-body').replace('{time}', new Date().toLocaleTimeString());
+      NotificationManager.send(sub, body);
   }
 }
 
@@ -3139,7 +2801,7 @@ function openArtifact(id) {
   if(!a) return;
   const m = MODES[a.mode];
   const mnames = getModeNames();
-  document.getElementById('art-modal-title').textContent = a.id+' // '+a.name;
+  document.getElementById('art-modal-title').textContent = a.id+' // '+t(a.name);
   document.getElementById('art-modal-body').innerHTML = `
     <div style="text-align:center;font-size:56px;padding:${a.photo?'0':'24px'};background:var(--bg3);margin-bottom:16px;border:1px solid var(--border);overflow:hidden;max-height:200px">${a.photo?'<img src="'+a.photo+'" style="width:100%;max-height:200px;object-fit:cover">':a.img}</div>
     <div class="form-grid" style="margin-bottom:16px">
@@ -3149,6 +2811,9 @@ function openArtifact(id) {
         <div style="font-size:8px;color:#555;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px">${l}</div>
         <div style="font-size:11px;color:#fff;font-weight:bold">${v}</div>
       </div>`).join('')}
+    </div>
+    <div style="background:rgba(0,242,255,0.03);border:1px solid var(--border);padding:12px;margin-bottom:16px;font-size:11px;color:#ccc;line-height:1.6">
+       ${t(a.history)}
     </div>
     <div>
       <div style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">${t('art-comments')} (${a.comments.length})</div>
@@ -3199,7 +2864,7 @@ async function deleteArtifact(id) {
   renderArtifacts();
   renderReportArtifacts();
   renderMap();
-  showToast('Артефактът е изтрит', 'warning', 'ARCHIVE ITEM REMOVED');
+  showToast('toast-art-deleted', 'warning', 'ARCHIVE ITEM REMOVED');
 }
 
 // ─── ADD / EDIT ARTIFACT ───────────────────────────────────────────────────────
@@ -3310,7 +2975,7 @@ async function saveArtifact() {
     }
   } else {
     if(artifacts.find(x=>x.id===id)) { showToast('confirm-exists', 'error'); return; }
-    const newArt = {id,name,mat,date,gps,discoverer:disc,img:addForm.img,photo,mode:addForm.mode,likes:0,comments:[]};
+    const newArt = {id,name,mat,date,gps,discoverer:disc,img:addForm.img,photo,mode:addForm.mode,likes:0,comments:[],history:'Awaiting analysis...'};
     artifacts.push(newArt);
     await saveArtifactToCloud(newArt);
   }
@@ -3319,7 +2984,7 @@ async function saveArtifact() {
   renderArtifacts();
   renderReportArtifacts();
   renderMap();
-  showToast('Измененията са запазени', 'success');
+  showToast('toast-changes-saved', 'success');
 }
 
 // ─── ARCHIVE ───────────────────────────────────────────────────────────────────
@@ -3381,6 +3046,9 @@ function openArcDetail(id) {
         <div style="font-size:8px;color:var(--dim);text-transform:uppercase">${t('art-mat')}: ${t(arc.mat)} // ${arc.discoverer}</div>
         <div style="font-size:8px;color:var(--dim)">GPS: ${arc.gps}</div>
       </div>
+    </div>
+    <div style="background:rgba(0,242,255,0.03);border:1px solid var(--border);padding:12px;margin-bottom:12px;font-size:11px;color:#ccc;line-height:1.5">
+       ${t(arc.history)}
     </div>
     <div style="background:var(--bg3);border:1px solid var(--border);padding:14px;margin-bottom:12px">
       <div style="font-size:8px;color:var(--dim);text-transform:uppercase;margin-bottom:10px">${t('arc-tds-journey')}</div>
@@ -3578,8 +3246,10 @@ const NotificationManager = {
     }
     
     const now = Date.now();
-    const cooldown = 1000 * 60 * 60; // 1 hour cooldown per type
-    if (lastNotificationTimes[subject] && (now - lastNotificationTimes[subject] < cooldown)) {
+    const isTest = subject === t('notif-test-sub');
+    const cooldown = isTest ? 0 : 1000 * 60; // 1 minute cooldown for real alerts, 0 for tests
+    
+    if (!isTest && lastNotificationTimes[subject] && (now - lastNotificationTimes[subject] < cooldown)) {
         console.log(`Notification for ${subject} suppressed (cooldown).`);
         return;
     }
@@ -3595,8 +3265,8 @@ const NotificationManager = {
 
     console.log(`[Notification] Sending to ${notificationEmail}: ${subject}`);
     
-    emailjs.send('service_2amjoaq', 'template_i9255vp', params, 'vGXwCXxC-2FG2YLXb')
-    .then(() => showToast('Известието е изпратено по имейл', 'success'))
+    emailjs.send('service_jekyohp', 'template_i9255vp', params, 'vGXwCXxC-2FG2YLXb')
+    .then(() => showToast(t('notif-success-msg'), 'success'))
     .catch((err) => console.error('EmailJS Error:', err));
   }
 };
@@ -3604,22 +3274,28 @@ const NotificationManager = {
 function saveNotificationConfig() {
     const email = document.getElementById('notif-email-input').value.trim();
     if (!email || !email.includes('@')) {
-        showToast('Моля въведете валиден имейл!', 'error');
+        showToast('notif-err-invalid', 'error');
         return;
     }
     notificationEmail = email;
     localStorage.setItem('asoa_notification_email', email);
-    showToast('Имейлът е запазен успешно', 'success');
+    showToast('notif-success-save', 'success');
 }
 
 function sendTestNotification() {
     if (!notificationEmail) {
-        showToast('Първо въведете и запазете имейл!', 'warning');
+        showToast('notif-warn-no-email', 'warning');
         return;
     }
-    NotificationManager.send('ASOA Тестово Известие', 'Това е тестов имейл от системата ASOA за проверка на конфигурацията.');
-    showToast('Тестово известие е инициирано', 'info');
+    NotificationManager.send(t('notif-test-sub'), t('notif-test-body'));
+    showToast('notif-info-test', 'info');
 }
+
+// Initialize EmailJS
+emailjs.init('vGXwCXxC-2FG2YLXb');
+
+// Apply initial translations
+applyTranslations();
 </script>
 <div id="toast-container"></div>
 </body>
