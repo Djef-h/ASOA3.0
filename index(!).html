@@ -1,0 +1,3932 @@
+<!DOCTYPE html>
+<html lang="bg">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASOA</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💧</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+        :root {
+            --cyan: #00f2ff;
+            --green: #00ff41;
+            --yellow: #ffea00;
+            --red: #ff4060;
+            --orange: #ff9020;
+            --bg: #050508;
+            --bg2: #0c0c14;
+            --bg3: #111118;
+            --border: #2a2a3a;
+            --dim: #888;
+            --font: 'Share Tech Mono', monospace;
+            --head: 'Orbitron', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* ── LOGIN SCREEN ── */
+        #login-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            padding: 30px;
+            width: 100%;
+            max-width: 360px;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .login-diamond {
+            width: 48px;
+            height: 48px;
+            border: 2px solid var(--yellow);
+            transform: rotate(45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .login-diamond span {
+            transform: rotate(-45deg);
+            font-size: 24px;
+        }
+
+        .login-title {
+            font-family: var(--head);
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: 0.2em;
+            color: var(--cyan);
+        }
+
+        .login-sub {
+            font-size: 10px;
+            color: var(--dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 4px;
+        }
+
+        .login-lang-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .login-field {
+            margin-bottom: 16px;
+        }
+
+        .login-label {
+            display: block;
+            font-size: 10px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 6px;
+        }
+
+        .login-input {
+            width: 100%;
+            background: #000;
+            border: 1px solid var(--border);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 14px;
+            padding: 10px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .login-input:focus {
+            border-color: var(--cyan);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--cyan);
+            border: none;
+            color: #000;
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .login-btn:hover {
+            background: #00d2df;
+        }
+
+        /* ── LANGUAGE SWITCHER ── */
+        .lang-switcher {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            position: relative;
+        }
+
+        .lang-btn {
+            height: 26px;
+            border: 1px solid var(--border);
+            background: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-size: 13px;
+            line-height: 1;
+            transition: border-color 0.2s, transform 0.15s, background 0.2s;
+            padding: 0 7px;
+            border-radius: 3px;
+            opacity: 0.5;
+            filter: grayscale(60%);
+            color: #aaa;
+            font-family: var(--font);
+            letter-spacing: 0.05em;
+        }
+
+        .lang-btn .lang-code {
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .lang-btn:hover {
+            opacity: 0.85;
+            filter: grayscale(0%);
+            transform: scale(1.05);
+            border-color: rgba(0, 242, 255, 0.3);
+            background: rgba(0, 242, 255, 0.05);
+            color: var(--cyan);
+            z-index: 1;
+        }
+
+        .lang-btn.active {
+            opacity: 1;
+            filter: grayscale(0%);
+            border-color: var(--cyan);
+            box-shadow: 0 0 8px rgba(0, 242, 255, 0.25);
+            background: rgba(0, 242, 255, 0.08);
+            color: var(--cyan);
+        }
+
+        /* ── SIDEBAR ── */
+        #sidebar {
+            width: 56px;
+            background: #05050a;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 0;
+            flex-shrink: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            border: 2px solid var(--yellow);
+            transform: rotate(45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            box-shadow: 0 0 12px rgba(255, 234, 0, 0.2);
+            flex-shrink: 0;
+        }
+
+        .logo span {
+            transform: rotate(-45deg);
+            font-size: 16px;
+        }
+
+        .nav-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--dim);
+            border: none;
+            background: none;
+            font-size: 18px;
+            transition: color 0.2s;
+            margin: 2px 0;
+            position: relative;
+        }
+
+        .nav-btn:hover {
+            color: #666;
+        }
+
+        .nav-btn.active {
+            color: var(--cyan);
+        }
+
+        .nav-btn.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--cyan);
+        }
+
+        /* ── MAIN ── */
+        #main {
+            margin-left: 56px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ── HEADER ── */
+        #header {
+            height: 52px;
+            background: #05050a;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            flex-shrink: 0;
+            gap: 8px;
+        }
+
+        .header-title {
+            font-family: var(--head);
+            font-size: 12px;
+            letter-spacing: 0.25em;
+            color: var(--cyan);
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: nowrap;
+        }
+
+        .badge {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border: 1px solid;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            white-space: nowrap;
+        }
+
+        .badge.online {
+            border-color: rgba(0, 255, 65, 0.5);
+            background: rgba(0, 255, 65, 0.1);
+            color: var(--green);
+        }
+
+        .badge.offline {
+            border-color: rgba(255, 64, 96, 0.5);
+            background: rgba(255, 64, 96, 0.1);
+            color: var(--red);
+        }
+
+        .badge.warn {
+            border-color: rgba(255, 234, 0, 0.5);
+            background: rgba(255, 234, 0, 0.1);
+            color: var(--yellow);
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .dot.green {
+            background: var(--green);
+        }
+
+        .dot.red {
+            background: var(--red);
+        }
+
+        .dot.pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.4
+            }
+        }
+
+        .hdr-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 10px;
+            border: 1px solid var(--border);
+            background: none;
+            color: #aaa;
+            font-family: var(--font);
+            font-size: 10px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .hdr-btn:hover {
+            color: var(--green);
+            border-color: rgba(0, 255, 65, 0.4);
+        }
+
+        .hdr-btn.danger {
+            border-color: rgba(255, 64, 96, 0.4);
+            color: var(--red);
+        }
+
+        .hdr-btn.danger:hover {
+            background: rgba(255, 64, 96, 0.12);
+        }
+
+        /* ── CONTENT ── */
+        #content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .page {
+            display: none;
+            padding: 20px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* ── CARDS GRID ── */
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        @media(max-width:900px) {
+            .grid-4 {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media(max-width:600px) {
+            .grid-4 {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .grid-3 {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            padding: 16px;
+        }
+
+        .card-title {
+            font-family: var(--head);
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            color: #aaa;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title .icon {
+            font-size: 13px;
+        }
+
+        /* ── SENSOR CARDS ── */
+        .sensor-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+
+        .sensor-card:hover {
+            border-color: rgba(0, 242, 255, 0.2);
+        }
+
+        .sensor-label {
+            font-size: 11px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .sensor-value {
+            font-family: var(--head);
+            font-size: 28px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .sensor-unit {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .sensor-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 2px;
+            width: 0%;
+            transition: width 1s ease;
+        }
+
+        /* ── CHART ── */
+        .chart-wrap {
+            position: relative;
+            height: 220px;
+        }
+
+        /* ── RELAY BUTTONS ── */
+        .relay-btn {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            background: none;
+            color: #aaa;
+            font-family: var(--font);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+            margin-bottom: 6px;
+        }
+
+        .relay-btn:hover:not(:disabled) {
+            color: #ddd;
+        }
+
+        .relay-btn.on {
+            border-color: rgba(0, 255, 65, 0.5);
+            background: rgba(0, 255, 65, 0.1);
+            color: var(--green);
+        }
+
+        .relay-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        /* ── TOGGLE ── */
+        .toggle {
+            width: 32px;
+            height: 16px;
+            background: var(--border);
+            border-radius: 8px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .toggle.on {
+            background: var(--green);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #fff;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+        }
+
+        .toggle.on::after {
+            transform: translateX(16px);
+        }
+
+        /* ── PROTOCOL BUTTONS ── */
+        .proto-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .proto-btn {
+            padding: 8px 6px;
+            border: 1px solid var(--border);
+            background: none;
+            color: #888;
+            font-family: var(--font);
+            font-size: 10px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.05em;
+        }
+
+        /* ── PHASE TRACKER ── */
+        .phase-track {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 12px;
+        }
+
+        .phase-item {
+            flex: 1;
+        }
+
+        .phase-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .phase-bar-bg {
+            height: 4px;
+            background: var(--border);
+            overflow: hidden;
+        }
+
+        .phase-bar-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 1s ease;
+        }
+
+        .phase-arrow {
+            color: var(--border);
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        /* ── PLATEAU ── */
+        .plateau-box {
+            border: 1px dashed rgba(255, 234, 0, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            margin-top: 12px;
+        }
+
+        .plateau-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            margin-bottom: 6px;
+            color: #aaa;
+            text-transform: uppercase;
+        }
+
+        .plateau-progress {
+            height: 4px;
+            background: var(--border);
+            overflow: hidden;
+        }
+
+        .plateau-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 1s ease;
+            background: var(--yellow);
+            box-shadow: 0 0 6px var(--yellow);
+        }
+
+        /* ── PREDICTION ── */
+        .pred-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        @media(max-width:600px) {
+            .pred-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .pred-item {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            padding: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pred-label {
+            font-size: 9px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+        }
+
+        .pred-value {
+            font-family: var(--head);
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .pred-unit {
+            font-size: 9px;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .pred-accent {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            opacity: 0.4;
+        }
+
+        /* ── ARTIFACT CARDS ── */
+        .artifact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .artifact-card {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: border-color 0.2s;
+            overflow: hidden;
+        }
+
+        .artifact-card:hover {
+            border-color: rgba(0, 242, 255, 0.3);
+        }
+
+        .artifact-emoji {
+            height: 100px;
+            background: var(--bg3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 42px;
+            transition: transform 0.3s;
+        }
+
+        .artifact-card:hover .artifact-emoji {
+            transform: scale(1.1);
+        }
+
+        .artifact-info {
+            padding: 10px;
+        }
+
+        .artifact-id {
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 0.15em;
+        }
+
+        .artifact-name {
+            font-size: 11px;
+            color: #fff;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 3px 0;
+        }
+
+        .artifact-meta {
+            font-size: 9px;
+            color: #888;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* ── DISCOVERY HEADER ── */
+        .disc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .page-title {
+            font-family: var(--head);
+            font-size: 16px;
+            font-weight: 900;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-btn {
+            padding: 5px 10px;
+            border: 1px solid var(--border);
+            background: none;
+            color: #888;
+            font-family: var(--font);
+            font-size: 10px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            color: #fff;
+        }
+
+        .filter-btn.active {
+            background: var(--cyan);
+            color: #000;
+            border-color: var(--cyan);
+        }
+
+        .search-box {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            color: #fff;
+            font-family: var(--font);
+            font-size: 11px;
+            outline: none;
+            width: 160px;
+            transition: border-color 0.2s;
+        }
+
+        .search-box:focus {
+            border-color: var(--cyan);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border: 1px solid;
+            background: none;
+            font-family: var(--font);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-green {
+            border-color: rgba(0, 255, 65, 0.5);
+            color: var(--green);
+        }
+
+        .btn-green:hover {
+            background: var(--green);
+            color: #000;
+        }
+
+        .btn-cyan {
+            border-color: rgba(0, 242, 255, 0.5);
+            color: var(--cyan);
+        }
+
+        .btn-cyan:hover {
+            background: var(--cyan);
+            color: #000;
+        }
+
+        .btn-yellow {
+            border-color: rgba(255, 234, 0, 0.5);
+            color: var(--yellow);
+        }
+
+        .btn-yellow:hover {
+            background: var(--yellow);
+            color: #000;
+        }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg2);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            max-width: 560px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--cyan), transparent);
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-family: var(--head);
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--dim);
+            cursor: pointer;
+            font-size: 18px;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #fff;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        /* ── FORM ── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media(max-width:500px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 4px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 10px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 5px;
+        }
+
+        .form-input {
+            width: 100%;
+            background: #000;
+            border: 1px solid var(--border);
+            color: #fff;
+            font-family: var(--font);
+            font-size: 11px;
+            padding: 8px 10px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: var(--cyan);
+        }
+
+        /* ── EMOJI PICKER ── */
+        .emoji-pick {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .emoji-opt {
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--border);
+            background: none;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.2s;
+        }
+
+        .emoji-opt.selected {
+            border-color: var(--cyan);
+            background: rgba(0, 242, 255, 0.08);
+        }
+
+        /* ── TABLE ── */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            font-family: var(--font);
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 7px 8px;
+            border-bottom: 1px solid var(--border);
+            color: #aaa;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 0.1em;
+        }
+
+        .data-table th.right {
+            text-align: right;
+        }
+
+        .data-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #1a1a24;
+            transition: background 0.1s;
+        }
+
+        .data-table tr:hover td {
+            background: var(--border);
+        }
+
+        .data-table td.right {
+            text-align: right;
+        }
+
+        /* ── MAP SVG ── */
+        #map-svg {
+            width: 100%;
+            height: auto;
+            cursor: crosshair;
+        }
+
+        /* ── ARCHIVE ── */
+        .arc-item {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .arc-item:hover {
+            border-color: rgba(0, 255, 65, 0.35);
+        }
+
+        .arc-stripe {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+        }
+
+        .arc-emoji {
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .arc-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .arc-id {
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 0.15em;
+        }
+
+        .arc-name {
+            font-size: 13px;
+            font-weight: bold;
+            color: #fff;
+            text-transform: uppercase;
+            margin: 2px 0;
+        }
+
+        .arc-meta {
+            font-size: 10px;
+            color: #888;
+        }
+
+        .arc-tds {
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .arc-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 1px solid;
+            margin-left: 8px;
+        }
+
+        /* ── NODE STATUS ── */
+        .node-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media(max-width:600px) {
+            .node-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .node-card {
+            border: 1px solid var(--border);
+            padding: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .node-card.online {
+            border-color: rgba(0, 255, 65, 0.3);
+        }
+
+        .node-card.offline {
+            border-color: rgba(255, 64, 96, 0.3);
+        }
+
+        .node-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6px;
+        }
+
+        .node-id {
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 0.15em;
+            color: var(--cyan);
+        }
+
+        .node-status-badge {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .node-name {
+            font-size: 12px;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .node-detail {
+            font-size: 10px;
+            color: #888;
+            line-height: 1.7;
+        }
+
+        /* ── SETTINGS MATRIX ── */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        .matrix-table th {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            color: #aaa;
+            text-transform: uppercase;
+            font-size: 9px;
+            letter-spacing: 0.1em;
+            text-align: left;
+        }
+
+        .matrix-table th.center {
+            text-align: center;
+        }
+
+        .matrix-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #1a1a24;
+        }
+
+        .matrix-table td.center {
+            text-align: center;
+        }
+
+        /* ── FOOTER ── */
+        #footer {
+            height: 34px;
+            background: #05050a;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            flex-shrink: 0;
+        }
+
+        .footer-dots {
+            display: flex;
+            gap: 16px;
+        }
+
+        .footer-dot-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* ── OFFLINE BANNER ── */
+        .offline-banner {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 64, 96, 0.08);
+            border: 1px solid rgba(255, 64, 96, 0.35);
+            padding: 12px 16px;
+            margin-bottom: 14px;
+        }
+
+        .offline-banner.show {
+            display: flex;
+        }
+
+        .offline-banner-text {
+            flex: 1;
+        }
+
+        .offline-banner-title {
+            font-size: 11px;
+            color: var(--red);
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .offline-banner-sub {
+            font-size: 10px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        /* ── LORA STRIP ── */
+        .lora-strip {
+            display: none;
+            align-items: center;
+            gap: 16px;
+            background: rgba(0, 242, 255, 0.06);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            padding: 10px 16px;
+            margin-bottom: 14px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: var(--cyan);
+        }
+
+        .lora-strip.show {
+            display: flex;
+        }
+
+        .lora-val {
+            color: #fff;
+        }
+
+        /* ── TOAST NOTIFICATIONS ── */
+        #toast-container {
+            position: fixed;
+            bottom: 40px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: #0c0c14;
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+            min-width: 280px;
+            max-width: 400px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.3s ease forwards;
+            pointer-events: auto;
+            position: relative;
+            overflow: hidden;
+            font-family: var(--font);
+            font-size: 11px;
+        }
+
+        .toast::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--cyan);
+        }
+
+        .toast.success::before {
+            background: var(--green);
+        }
+
+        .toast.error::before {
+            background: var(--red);
+        }
+
+        .toast.warning::before {
+            background: var(--yellow);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+        }
+    </style>
+</head>
+
+<body class="ocean">
+
+    <!-- LOGIN -->
+    <div id="login-screen">
+        <div class="login-box">
+            <div style="position:absolute; top:12px; right:12px; display:flex; gap:4px;">
+                <button class="lang-btn" onclick="switchTheme('ocean')" title="Тъмна тема"
+                    style="font-size:14px;padding:2px 6px">🌙</button>
+                <button class="lang-btn" onclick="switchTheme('light')" title="Светла тема"
+                    style="font-size:14px;padding:2px 6px">☀️</button>
+            </div>
+            <div class="login-logo">
+                <div class="login-diamond"><span>💧</span></div>
+                <div class="login-title">ASOA</div>
+                <div class="login-sub" id="login-sub-text">Протокол за сигурност Алфа-9</div>
+            </div>
+            <!-- Language switcher on login -->
+            <div class="login-lang-row">
+                <button class="lang-btn active" onclick="setLang('bg')" title="Български">🇧🇬<span
+                        class="lang-code">BG</span></button>
+                <button class="lang-btn" onclick="setLang('en')" title="English">🇬🇧<span
+                        class="lang-code">EN</span></button>
+                <button class="lang-btn" onclick="setLang('de')" title="Deutsch">🇩🇪<span
+                        class="lang-code">DE</span></button>
+            </div>
+            <div class="login-field">
+                <label class="login-label" id="lbl-operator">Идентификатор на оператор</label>
+                <input class="login-input" id="login-id" type="text" placeholder="USER_ID"
+                    onkeydown="if(event.key==='Enter')doLogin()">
+            </div>
+            <div class="login-field">
+                <label class="login-label" id="lbl-access">Хеш за достъп</label>
+                <input class="login-input" id="login-pw" type="password" placeholder="••••••••"
+                    onkeydown="if(event.key==='Enter')doLogin()">
+            </div>
+            <div id="login-error"
+                style="display:none;color:var(--red);font-size:11px;text-align:center;margin-bottom:10px;padding:8px;border:1px solid rgba(255,64,96,0.3);background:rgba(255,64,96,0.08)">
+                ⚠ Грешно потребителско име или парола</div>
+            <button class="login-btn" onclick="doLogin()" id="login-btn-text">🔐 Авторизация</button>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+        <div class="logo"><span>💧</span></div>
+        <button class="nav-btn active" id="nav-btn-dashboard" onclick="showPage('dashboard')"
+            title="Терминал">📊</button>
+        <button class="nav-btn" id="nav-btn-discovery" onclick="showPage('discovery')" title="Архив">🗄️</button>
+        <button class="nav-btn" id="nav-btn-archive" onclick="showPage('archive')" title="История">📜</button>
+        <button class="nav-btn" id="nav-btn-reports" onclick="showPage('reports')" title="Доклади">📋</button>
+        <button class="nav-btn" id="nav-btn-map" onclick="showPage('map')" title="Карта">🗺️</button>
+        <button class="nav-btn" id="nav-btn-settings" onclick="showPage('settings')" title="Конфиг">⚙️</button>
+        <div style="flex:1"></div>
+        <button class="nav-btn" onclick="doLogout()" title="Logout" style="color:var(--red)">🚪</button>
+    </div>
+
+    <!-- MAIN -->
+    <div id="main">
+
+        <!-- HEADER -->
+        <div id="header">
+            <div class="header-title" id="header-title">ASOA // ТЕРМИНАЛ</div>
+            <div class="header-right">
+                <div id="live-clock"
+                    style="font-family:'Share Tech Mono',monospace;font-size:14px;color:rgba(0,242,255,0.8);margin-right:8px;padding-right:12px;border-right:1px solid rgba(0,242,255,0.2);letter-spacing:0.1em;font-weight:bold;display:flex;align-items:center;">
+                    00:00:00</div>
+                <div class="badge offline" id="esp-badge">
+                    <span class="dot red" id="esp-dot"></span>
+                    <span id="esp-label">ESP ОФЛАЙН</span>
+                </div>
+                <button class="hdr-btn" onclick="exportCSV()" id="btn-csv">⬇ CSV</button>
+                <button class="hdr-btn danger" onclick="emergencyStop()" id="btn-emstop">⛔ АВАРИЙНО СПИРАНЕ</button>
+                <div class="lang-switcher" id="header-lang-switcher" style="margin-left:6px">
+                    <button class="lang-btn active" onclick="setLang('bg')" title="Български">🇧🇬<span
+                            class="lang-code">BG</span></button>
+                    <button class="lang-btn" onclick="setLang('en')" title="English">🇬🇧<span
+                            class="lang-code">EN</span></button>
+                    <button class="lang-btn" onclick="setLang('de')" title="Deutsch">🇩🇪<span
+                            class="lang-code">DE</span></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div id="content">
+
+            <!-- ══ DASHBOARD ══ -->
+            <div class="page active" id="page-dashboard">
+
+                <div class="offline-banner" id="offline-banner">
+                    <span style="font-size:20px">📡</span>
+                    <div class="offline-banner-text">
+                        <div class="offline-banner-title" id="banner-title">ESP офлайн — няма данни от сензорите</div>
+                        <div class="offline-banner-sub" id="ws-url-label">ws://192.168.1.101:81 — reconnect на всеки 5
+                            сек</div>
+                    </div>
+                </div>
+
+                <!-- Phase Tracker -->
+                <div class="card" style="margin-bottom:14px">
+                    <div class="card-title"><span class="icon">⚡</span> <span id="lbl-phase-title">Фаза на
+                            процеса</span>
+                        <div style="margin-left:auto">
+                            <span id="phase-badge"
+                                style="font-size:8px;font-weight:bold;padding:3px 10px;border:1px solid rgba(0,242,255,0.3);color:var(--cyan);background:rgba(0,242,255,0.05);text-transform:uppercase"
+                                data-i18n-key="phase0">НАКИСВАНЕ</span>
+                        </div>
+                    </div>
+                    <div class="phase-track">
+                        <div class="phase-item">
+                            <div class="phase-label"><span id="ph0-lbl" style="color:#888"
+                                    data-i18n-key="phase0">Накисване</span><span id="ph0-pct"
+                                    style="color:var(--cyan)"></span></div>
+                            <div class="phase-bar-bg">
+                                <div class="phase-bar-fill" id="ph0-bar" style="background:var(--cyan)"></div>
+                            </div>
+                        </div>
+                        <div class="phase-arrow">›</div>
+                        <div class="phase-item">
+                            <div class="phase-label"><span id="ph1-lbl" style="color:#333"
+                                    data-i18n-key="phase1">Активно</span><span id="ph1-pct"
+                                    style="color:var(--yellow)"></span></div>
+                            <div class="phase-bar-bg">
+                                <div class="phase-bar-fill" id="ph1-bar" style="background:var(--yellow)"></div>
+                            </div>
+                        </div>
+                        <div class="phase-arrow">›</div>
+                        <div class="phase-item">
+                            <div class="phase-label"><span id="ph2-lbl" style="color:#333"
+                                    data-i18n-key="phase2">Плато</span><span id="ph2-pct"
+                                    style="color:var(--orange)"></span></div>
+                            <div class="phase-bar-bg">
+                                <div class="phase-bar-fill" id="ph2-bar" style="background:var(--orange)"></div>
+                            </div>
+                        </div>
+                        <div class="phase-arrow">›</div>
+                        <div class="phase-item">
+                            <div class="phase-label"><span id="ph3-lbl" style="color:#333"
+                                    data-i18n-key="phase3">Финализиране</span>
+                            </div>
+                            <div class="phase-bar-bg">
+                                <div class="phase-bar-fill" id="ph3-bar" style="background:var(--green)"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prediction -->
+                <div class="card" style="margin-bottom:14px">
+                    <div class="card-title"><span class="icon">📉</span> <span id="lbl-prediction">Предсказване</span>
+                        <div style="margin-left:auto" id="pred-conf-badge"></div>
+                    </div>
+                    <div id="pred-content">
+                        <div style="font-size:10px;color:var(--dim);font-style:italic" id="pred-no-data">Недостатъчно
+                            данни за
+                            предсказване</div>
+                    </div>
+                </div>
+
+                <!-- Sensor Cards -->
+                <div class="grid-4">
+                    <div class="sensor-card">
+                        <div class="sensor-label" id="lbl-tds">Соленост (TDS)</div>
+                        <div class="sensor-value" id="val-tds" style="color:var(--cyan)">—</div>
+                        <div class="sensor-unit">ppt</div>
+                        <div class="sensor-bar" id="bar-tds" style="background:var(--cyan)"></div>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-label" id="lbl-ec">Проводимост (EC)</div>
+                        <div class="sensor-value" id="val-ec" style="color:var(--green)">—</div>
+                        <div class="sensor-unit">mS/cm</div>
+                        <div class="sensor-bar" id="bar-ec" style="background:var(--green)"></div>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-label" id="lbl-temp">Температура</div>
+                        <div class="sensor-value" id="val-temp" style="color:var(--yellow)">—</div>
+                        <div class="sensor-unit">°C</div>
+                        <div class="sensor-bar" id="bar-temp" style="background:var(--yellow)"></div>
+                    </div>
+                    <div class="sensor-card">
+                        <div class="sensor-label" id="lbl-wl">Ниво вода</div>
+                        <div class="sensor-value" id="val-wl" style="color:var(--red)">—</div>
+                        <div class="sensor-unit">%</div>
+                        <div class="sensor-bar" id="bar-wl" style="background:var(--red)"></div>
+                    </div>
+                </div>
+
+                <!-- Chart + Control -->
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-title"><span class="icon">📈</span> <span id="lbl-chart-title">Динамика на
+                                обезсоляването</span></div>
+                        <div class="chart-wrap">
+                            <canvas id="tds-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title"><span class="icon">🔧</span> <span id="lbl-hw-control">Хардуерен
+                                контрол</span>
+                        </div>
+
+                        <!-- Auto Mode -->
+                        <div id="auto-box" style="border:1px solid var(--border);padding:10px 12px;margin-bottom:10px">
+                            <div style="display:flex;align-items:center;justify-content:space-between">
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <span style="font-size:12px">🤖</span>
+                                    <span
+                                        style="font-size:8px;font-weight:bold;text-transform:uppercase;color:var(--dim)"
+                                        id="auto-label">Авто Режим</span>
+                                </div>
+                                <div class="toggle" id="auto-toggle" onclick="toggleAuto()"></div>
+                            </div>
+                            <div id="auto-desc"
+                                style="display:none;font-size:7px;color:rgba(0,242,255,0.4);margin-top:5px;font-style:italic"
+                                id="lbl-auto-desc">
+                                Системата автоматично управлява клапаните спрямо TDS
+                            </div>
+                        </div>
+
+                        <div id="relay-panel">
+                            <button class="relay-btn" id="r1-btn" onclick="toggleRelay('r1')">
+                                <span id="lbl-r1">💧 Дренажна помпа</span>
+                                <div class="toggle" id="r1-tog"></div>
+                            </button>
+                            <button class="relay-btn" id="r2-btn" onclick="toggleRelay('r2')">
+                                <span id="lbl-r2">🌊 Клапан морска вода</span>
+                                <div class="toggle" id="r2-tog"></div>
+                            </button>
+                            <button class="relay-btn" id="r3-btn" onclick="toggleRelay('r3')">
+                                <span id="lbl-r3">🔄 Клапан чешмяна вода</span>
+                                <div class="toggle" id="r3-tog"></div>
+                            </button>
+                        </div>
+
+                        <div style="margin-top:10px">
+                            <div style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;font-weight:bold"
+                                id="lbl-active-proto">Активен протокол</div>
+                            <div class="proto-grid" style="grid-template-columns:1fr 1fr 1fr">
+                                <button class="proto-btn" id="proto-GLASS" onclick="setMode('GLASS')"
+                                    data-i18n-key="matGlass">🔷
+                                    Стъкло</button>
+                                <button class="proto-btn" id="proto-CERAMIC" onclick="setMode('CERAMIC')"
+                                    data-i18n-key="matCeramic">🏺
+                                    Керамика</button>
+                                <button class="proto-btn" id="proto-STONE" onclick="setMode('STONE')"
+                                    data-i18n-key="matStone">🪨
+                                    Камък</button>
+                                <button class="proto-btn" id="proto-METAL" onclick="setMode('METAL')"
+                                    data-i18n-key="matMetal">⚔️
+                                    Метал</button>
+                                <button class="proto-btn" id="proto-WOOD" onclick="setMode('WOOD')"
+                                    data-i18n-key="matWood" style="border-color:rgba(139,90,43,0.5);color:#b87333">🪵
+                                    Дърво</button>
+                            </div>
+                        </div>
+
+                        <div class="plateau-box">
+                            <div class="plateau-label">
+                                <span id="lbl-plateau-analysis">Анализ на плато</span>
+                                <span id="plateau-val" style="color:var(--yellow);font-weight:bold">0%</span>
+                            </div>
+                            <div class="plateau-progress">
+                                <div class="plateau-fill" id="plateau-fill"></div>
+                            </div>
+                            <div style="font-size:8px;color:var(--dim);margin-top:6px" id="plateau-target">Цел: 8 ppt //
+                                Δ &lt; 1% за
+                                21 дни</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Node Status -->
+                <div class="card">
+                    <div class="card-title"><span class="icon">📡</span> <span id="lbl-node-status">Статус на
+                            Нода</span></div>
+                    <div class="node-grid">
+                        <div class="node-card" id="node-esp01">
+                            <div class="node-top">
+                                <div class="node-id">ESP-01</div>
+                                <div class="node-status-badge">
+                                    <div class="dot red" id="node-dot"></div>
+                                    <span id="node-status-text" style="color:var(--red)">OFFLINE</span>
+                                </div>
+                            </div>
+                            <div class="node-name" id="node-name-esp">Primary Tank</div>
+                            <div class="node-detail" id="node-detail">
+                                IP: 192.168.1.101<br>
+                                FW: v1.0<br>
+                                <span id="lbl-mode-node">Mode</span>: <span id="node-mode"
+                                    style="color:var(--yellow)">CERAMIC</span>
+                            </div>
+                        </div>
+                        <div class="node-card" style="border-color:rgba(0,242,255,0.1)">
+                            <div class="node-top">
+                                <div class="node-id" style="color:var(--green)">SYS</div>
+                                <div class="node-status-badge">
+                                    <div class="dot green pulse"></div>
+                                    <span style="color:var(--green)">ACTIVE</span>
+                                </div>
+                            </div>
+                            <div class="node-name" id="node-name-sys">Dashboard</div>
+                            <div class="node-detail" id="sys-detail">
+                                <span id="lbl-data-node">Данни</span>: <span id="data-count">0</span> <span
+                                    id="lbl-points">точки</span><br>
+                                <span id="lbl-session-node">Сесия</span>: <span id="session-time">—</span><br>
+                                <span id="lbl-version-node">Версия</span>: v1.0
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ DISCOVERY ══ -->
+            <div class="page" id="page-discovery">
+                <div class="disc-header">
+                    <div class="page-title" style="color:var(--cyan)" id="lbl-digital-archive">Дигитален Архив</div>
+                    <div class="filter-row">
+                        <button class="btn btn-green" onclick="openAddArtifact()" id="btn-new-artifact">+ Нов
+                            артефакт</button>
+                        <input class="search-box" id="art-search" placeholder="Търси..." oninput="renderArtifacts()">
+                        <button class="filter-btn active" id="f-ALL" onclick="setFilter('ALL')"
+                            data-i18n-key="all">ALL</button>
+                        <button class="filter-btn" id="f-GLASS" onclick="setFilter('GLASS')"
+                            data-i18n-key="matGlassShort">Стъкло</button>
+                        <button class="filter-btn" id="f-CERAMIC" onclick="setFilter('CERAMIC')"
+                            data-i18n-key="matCeramicShort">Керамика</button>
+                        <button class="filter-btn" id="f-STONE" onclick="setFilter('STONE')"
+                            data-i18n-key="matStoneShort">Камък</button>
+                        <button class="filter-btn" id="f-METAL" onclick="setFilter('METAL')"
+                            data-i18n-key="matMetalShort">Метал</button>
+                        <button class="filter-btn" id="f-WOOD" onclick="setFilter('WOOD')" data-i18n-key="matWoodShort"
+                            style="color:#b87333">Дърво</button>
+                    </div>
+                </div>
+                <div class="artifact-grid" id="artifact-grid"></div>
+            </div>
+
+            <!-- ══ ARCHIVE ══ -->
+            <div class="page" id="page-archive">
+                <div class="disc-header">
+                    <div class="page-title" style="color:var(--green)" id="lbl-completed-archive">Архив на Завършени
+                        Проекти</div>
+                </div>
+                <div id="archive-list"></div>
+                <div class="grid-4" style="margin-top:16px" id="archive-stats"></div>
+            </div>
+
+            <!-- ══ REPORTS ══ -->
+            <div class="page" id="page-reports">
+                <div class="disc-header">
+                    <div class="page-title" style="color:var(--yellow)" id="lbl-reports-title">Система за Доклади</div>
+                </div>
+                <div class="card" style="margin-bottom:14px">
+                    <div class="card-title"><span class="icon">⚡</span> <span id="lbl-live-log">Live Сензорен
+                            Журнал</span></div>
+                    <div style="overflow-x:auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th id="th-time">Час</th>
+                                    <th class="right">TDS (ppt)</th>
+                                    <th class="right">EC (mS/cm)</th>
+                                    <th class="right" id="th-temp">Temp (°C)</th>
+                                    <th class="right" id="th-level">Ниво (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="report-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">📦</span> <span id="lbl-reports-by-artifact">Доклади по
+                            Артефакт</span></div>
+                    <div id="report-artifacts"></div>
+                </div>
+            </div>
+
+            <!-- ══ MAP ══ -->
+            <div class="page" id="page-map">
+                <div class="disc-header">
+                    <div class="page-title" style="color:var(--cyan)" id="lbl-map-title">Сонарна Карта</div>
+                    <div id="map-count" style="font-size:9px;color:var(--dim)"></div>
+                </div>
+                <div class="grid-2">
+                    <div class="card"
+                        style="padding:0; overflow:hidden; position:relative; display:flex; justify-content:center; align-items:center;">
+                        <div id="map-view" style="width:100%;height:480px;z-index:1"></div>
+                        <div class="radar-sweep"></div>
+                        <div
+                            style="position:absolute; width:10px; height:10px; background:var(--cyan); border-radius:50%; box-shadow:0 0 10px var(--cyan); z-index:3; pointer-events:none;">
+                        </div>
+                    </div>
+                    <div style="max-height:480px;overflow-y:auto" id="map-list"></div>
+                </div>
+            </div>
+
+            <!-- ══ SETTINGS ══ -->
+            <div class="page" id="page-settings">
+                <div class="disc-header">
+                    <div class="page-title" style="color:var(--green)" id="lbl-config-title">Конфигурация</div>
+                </div>
+                <div class="card" style="margin-bottom:14px">
+                    <div class="card-title"><span class="icon">📡</span> <span id="lbl-esp-conn">ESP Връзка</span></div>
+                    <div class="form-group" style="margin-bottom:12px">
+                        <label class="form-label" id="lbl-ws-addr">WebSocket адрес</label>
+                        <div style="display:flex;gap:8px">
+                            <input class="form-input" id="ws-input" value="ws://192.168.1.101:81" style="flex:1">
+                            <button class="btn btn-cyan" onclick="reconnectWS()" id="btn-reconnect">🔄 Свържи</button>
+                        </div>
+                    </div>
+                    <div class="grid-4">
+                        <div style="background:var(--bg3);border:1px solid var(--border);padding:10px">
+                            <div style="font-size:7px;color:var(--dim);text-transform:uppercase;margin-bottom:4px"
+                                id="lbl-status-set">Статус</div>
+                            <div style="font-size:10px;font-weight:bold" id="set-status">ОФЛАЙН</div>
+                        </div>
+                        <div style="background:var(--bg3);border:1px solid var(--border);padding:10px">
+                            <div style="font-size:7px;color:var(--dim);text-transform:uppercase;margin-bottom:4px"
+                                id="lbl-data-set">
+                                Данни</div>
+                            <div style="font-size:10px;font-weight:bold;color:var(--cyan)" id="set-datacount">0</div>
+                        </div>
+                        <div style="background:var(--bg3);border:1px solid var(--border);padding:10px">
+                            <div style="font-size:7px;color:var(--dim);text-transform:uppercase;margin-bottom:4px"
+                                id="lbl-interval-set">Интервал</div>
+                            <div style="font-size:10px;font-weight:bold;color:var(--green)" id="lbl-interval-val">3 сек
+                            </div>
+                        </div>
+                        <div style="background:var(--bg3);border:1px solid var(--border);padding:10px">
+                            <div style="font-size:7px;color:var(--dim);text-transform:uppercase;margin-bottom:4px"
+                                id="lbl-reconnect-set">Reconnect</div>
+                            <div style="font-size:10px;font-weight:bold;color:var(--yellow)" id="lbl-reconnect-val">5
+                                сек</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="margin-bottom:14px">
+                    <div class="card-title"><span class="icon">📧</span> <span id="lbl-notif-set">Настройки на
+                            известия</span>
+                    </div>
+                    <div class="form-group" style="margin-bottom:12px">
+                        <label class="form-label" id="lbl-notif-email">Имейл за известия</label>
+                        <div style="display:flex;gap:8px">
+                            <input class="form-input" id="notif-email-input" placeholder="example@mail.com"
+                                style="flex:1">
+                            <button class="btn btn-green" onclick="saveNotificationConfig()" id="btn-save-notif">💾
+                                Запази</button>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn btn-cyan" onclick="sendTestNotification()" id="btn-test-notif">✉
+                            Тест</button>
+                        <div style="font-size:9px;color:var(--dim);display:flex;align-items:center"
+                            id="lbl-notif-status">Системата
+                            ще изпраща имейл при критични нива или загуба на връзка.</div>
+                    </div>
+                </div>
+                <div class="card" style="margin-bottom:14px">
+                    <div class="card-title"><span class="icon">🧪</span> <span id="lbl-mat-matrix">Матрица на
+                            Материалите</span>
+                    </div>
+                    <table class="matrix-table">
+                        <thead>
+                            <tr>
+                                <th id="th-material">Материал</th>
+                                <th class="center" id="th-mix">Микс</th>
+                                <th class="center" id="th-target">Цел TDS</th>
+                                <th class="center" id="th-cycle">Цикъл</th>
+                                <th class="center" id="th-status">Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matrix-table"></tbody>
+                    </table>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">ℹ️</span> <span id="lbl-sys-info">System Info</span>
+                    </div>
+                    <div class="grid-4" id="sys-info"></div>
+                </div>
+                <div class="card" style="margin-top:14px">
+                    <div class="card-title"><span class="icon">💾</span> <span data-i18n-key="lbl-data-mgmt">Управление
+                            на
+                            данни</span></div>
+                    <div style="display:flex;gap:12px">
+                        <button class="btn btn-green" onclick="exportDataDB()"><span class="icon">⬇</span> Експорт Архив
+                            (JSON)</button>
+                        <label class="btn btn-yellow" style="cursor:pointer;text-align:center">
+                            <span class="icon">⬆</span> Импорт Архив
+                            <input type="file" accept=".json" style="display:none" onchange="importDataDB(event)">
+                        </label>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:14px">
+                    <div class="card-title"><span class="icon">🎨</span> <span data-i18n-key="lbl-theme">Визуална
+                            Тема</span>
+                    </div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap">
+                        <button class="btn" style="border-color:#00f2ff;color:#00f2ff"
+                            onclick="switchTheme('ocean')">Ocean
+                            (Cyan)</button>
+                        <button class="btn" style="border-color:#00ff41;color:#00ff41"
+                            onclick="switchTheme('matrix')">Matrix
+                            (Green)</button>
+                        <button class="btn" style="border-color:#ffb000;color:#ffb000"
+                            onclick="switchTheme('amber')">Retro
+                            (Amber)</button>
+                        <button class="btn" style="border-color:#666;color:#333;background:#fff"
+                            onclick="switchTheme('light')">Light (Светла)</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div id="footer">
+            <div class="footer-dots">
+                <div class="footer-dot-item">
+                    <div class="dot" id="foot-esp" style="background:var(--red)"></div><span>ESP-01</span>
+                </div>
+                <div class="footer-dot-item">
+                    <div class="dot" id="foot-data" style="background:var(--red)"></div><span>DATA</span>
+                </div>
+            </div>
+            <div style="color:rgba(0,242,255,0.2)" id="footer-coords">43.2046°N 27.9105°E // --:--:--</div>
+        </div>
+    </div>
+
+    <!-- ARTIFACT MODAL -->
+    <div class="modal-overlay" id="art-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="art-modal-title">Артефакт</div>
+                <button class="modal-close" onclick="closeModal('art-modal')">✕</button>
+            </div>
+            <div class="modal-body" id="art-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- ADD ARTIFACT MODAL -->
+    <div class="modal-overlay" id="add-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="add-modal-title">+ Нов Артефакт</div>
+                <button class="modal-close" onclick="closeModal('add-modal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom:12px">
+                    <div class="form-label" id="lbl-photo">Снимка</div>
+                    <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px">
+                        <div id="photo-preview"
+                            style="width:80px;height:80px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:40px;flex-shrink:0;overflow:hidden;">
+                        </div>
+                        <div style="flex:1">
+                            <label for="f-photo"
+                                style="display:block;padding:10px;border:1px dashed var(--border);background:var(--bg3);color:#aaa;font-family:var(--font);font-size:10px;text-transform:uppercase;text-align:center;cursor:pointer;transition:border-color 0.2s"
+                                onmouseover="this.style.borderColor='var(--cyan)'"
+                                onmouseout="this.style.borderColor='var(--border)'" id="lbl-choose-photo">
+                                📷 Избери снимка
+                            </label>
+                            <input type="file" id="f-photo" accept="image/*" style="display:none"
+                                onchange="handlePhotoUpload(event)">
+                            <div style="font-size:9px;color:#666;margin-top:4px" id="lbl-photo-hint">JPG, PNG до 2MB —
+                                или избери
+                                икона по-долу</div>
+                        </div>
+                    </div>
+                    <div class="form-label" style="margin-top:8px" id="lbl-icon-fallback">Икона (ако няма снимка)</div>
+                    <div class="emoji-pick" id="emoji-pick"></div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" id="lbl-field-id">ID</label>
+                        <input class="form-input" id="f-id" placeholder="A-103">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" id="lbl-field-name">Наименование</label>
+                        <input class="form-input" id="f-name" placeholder="Керамична Купа">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" id="lbl-field-mat">Материал</label>
+                        <input class="form-input" id="f-mat" placeholder="Глина">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" id="lbl-field-disc">Откривател</label>
+                        <input class="form-input" id="f-disc" placeholder="Dr. Petrov">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">GPS</label>
+                        <input class="form-input" id="f-gps" placeholder="43.2046°N 27.9105°E">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" id="lbl-field-date">Дата</label>
+                        <input class="form-input" id="f-date" type="date">
+                    </div>
+                </div>
+                <div style="margin:12px 0">
+                    <div class="form-label" id="lbl-field-proto">Протокол</div>
+                    <div class="proto-grid" id="add-proto-grid"></div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:16px">
+                    <button class="btn btn-green" onclick="saveArtifact()" id="save-art-btn">✓ Добави артефакт</button>
+                    <button class="btn" style="border-color:var(--border);color:var(--dim)"
+                        onclick="closeModal('add-modal')" id="btn-cancel-add">Откажи</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARCHIVE DETAIL MODAL -->
+    <div class="modal-overlay" id="arc-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="arc-modal-title"></div>
+                <button class="modal-close" onclick="closeModal('arc-modal')">✕</button>
+            </div>
+            <div class="modal-body" id="arc-modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        // ══════════════════════════════════════════════════════════
+        // TRANSLATIONS
+        // ══════════════════════════════════════════════════════════
+        emailjs.init("vGXwCXxC-2FG2YLXb");
+        const LANGS = {
+            bg: {
+                flag: '🇧🇬', name: 'Български',
+                // Login
+                'login-sub': 'Протокол за сигурност Алфа-9',
+                'lbl-operator': 'Идентификатор на оператор',
+                'lbl-access': 'Хеш за достъп',
+                'login-err': '⚠ Грешно потребителско име или парола',
+                'login-btn': '🔐 Авторизация',
+                // Header
+                'btn-csv': '⬇ CSV',
+                'btn-emstop': '⛔ АВАРИЙНО СПИРАНЕ',
+                // Nav titles
+                'nav-dashboard': 'ТЕРМИНАЛ',
+                'nav-discovery': 'АРХИВ',
+                'nav-archive': 'ИСТОРИЯ',
+                'nav-reports': 'ДОКЛАДИ',
+                'nav-map': 'КАРТА',
+                'nav-settings': 'КОНФИГ',
+                // Status
+                'esp-online': 'ESP СВЪРЗАН',
+                'esp-offline': 'ESP ОФЛАЙН',
+                'banner-title': 'ESP офлайн — няма данни от сензорите',
+                // Dashboard
+                'lbl-phase-title': 'Фаза на процеса',
+                'lbl-prediction': 'Предсказване',
+                'pred-no-data': 'Недостатъчно данни за предсказване',
+                'pred-no-fall': 'TDS не пада — провери сензора',
+                'pred-reached': 'Целевото TDS е достигнато!',
+                'lbl-tds': 'Соленост (TDS)',
+                'lbl-ec': 'Проводимост (EC)',
+                'lbl-temp': 'Температура',
+                'lbl-wl': 'Ниво вода',
+                'lbl-chart-title': 'Динамика на обезсоляването',
+                'lbl-hw-control': 'Хардуерен контрол',
+                'auto-label': 'Авто Режим',
+                'auto-desc': 'Системата автоматично управлява клапаните спрямо TDS',
+                'lbl-r1': '💧 Дренажна помпа',
+                'lbl-r2': '🌊 Клапан морска вода',
+                'lbl-r3': '🔄 Клапан чешмяна вода',
+                'lbl-active-proto': 'Активен протокол',
+                'lbl-plateau-analysis': 'Анализ на плато',
+                'lbl-node-status': 'Статус на Нода',
+                'lbl-mode-node': 'Mode',
+                'lbl-data-node': 'Данни',
+                'lbl-points': 'точки',
+                'lbl-session-node': 'Сесия',
+                'lbl-version-node': 'Версия',
+                // Phases
+                'phase0': 'Накисване',
+                'phase1': 'Активно',
+                'phase2': 'Плато',
+                'phase3': 'Финализиране',
+                'phase-names': ['Накисване', 'Активно обезсоляване', 'Плато', 'Финализиране'],
+                // Prediction
+                'pred-days': 'Оставащи дни',
+                'pred-date': 'Очаквана дата',
+                'pred-rate': 'TDS спад/ден',
+                'pred-conf': 'Точност',
+                'pred-accuracy-badge': '% ТОЧНОСТ',
+                // Plateau
+                'plateau-target-tpl': 'Цел: {target} ppt // Δ < 1% за 21 дни',
+                'plateau-done': '✓ ПЛАТО',
+                // Archive
+                'lbl-digital-archive': 'Дигитален Архив',
+                'btn-new-artifact': '+ Нов артефакт',
+                'art-search-ph': 'Търси...',
+                'no-artifacts': 'Няма намерени артефакти',
+                'all': 'ALL',
+                'matGlass': '🔷 Стъкло', 'matCeramic': '🏺 Керамика', 'matStone': '🪨 Камък', 'matMetal': '⚔️ Метал', 'matWood': '🪵 Дърво',
+                'matGlassShort': 'Стъкло', 'matCeramicShort': 'Керамика', 'matStoneShort': 'Камък', 'matMetalShort': 'Метал', 'matWoodShort': 'Дърво',
+                'lbl-language': 'Език',
+                // Completed archive
+                'lbl-completed-archive': 'Архив на Завършени Проекти',
+                'arc-completed': 'Завършени',
+                'arc-warnings': 'Предупреждения',
+                'arc-avg-drop': 'Среден спад TDS',
+                'arc-total': 'Общо артефакти',
+                'arc-success': '✓ УСПЕХ',
+                'arc-warning': '⚠ ВНИМАНИЕ',
+                // Reports
+                'lbl-reports-title': 'Система за Доклади',
+                'lbl-live-log': 'Live Сензорен Журнал',
+                'th-time': 'Час',
+                'th-level': 'Ниво (%)',
+                'th-temp': 'Temp (°C)',
+                'awaiting-data': 'Изчакване на данни...',
+                'lbl-reports-by-artifact': 'Доклади по Артефакт',
+                'btn-report': '⬇ Доклад',
+                // Map
+                'lbl-map-title': 'Сонарна Карта',
+                'map-points': 'точки',
+                // Settings
+                'lbl-config-title': 'Конфигурация',
+                'lbl-esp-conn': 'ESP Връзка',
+                'lbl-ws-addr': 'WebSocket адрес',
+                'btn-reconnect': '🔄 Свържи',
+                'lbl-status-set': 'Статус',
+                'lbl-data-set': 'Данни',
+                'lbl-interval-set': 'Интервал',
+                'lbl-interval-val': '3 сек',
+                'lbl-reconnect-set': 'Reconnect',
+                'lbl-reconnect-val': '5 сек',
+                'lbl-mat-matrix': 'Матрица на Материалите',
+                'th-material': 'Material',
+                'th-mix': 'Микс',
+                'th-target': 'Цел TDS',
+                'th-cycle': 'Цикъл',
+                'th-status': 'Статус',
+                'matrix-active': '● ACTIVE',
+                'matrix-standby': '○ STANDBY',
+                'lbl-sys-info': 'System Info',
+                'sys-version': 'Версия',
+                'sys-operator': 'Оператор',
+                'sys-protocol': 'Протокол',
+                // Add artifact modal
+                'lbl-photo': 'Снимка',
+                'lbl-choose-photo': '📷 Избери снимка',
+                'lbl-photo-hint': 'JPG, PNG до 2MB — или избери икона по-долу',
+                'lbl-icon-fallback': 'Икона (ако няма снимка)',
+                'lbl-field-id': 'ID',
+                'lbl-field-name': 'Наименование',
+                'lbl-field-mat': 'Материал',
+                'lbl-field-disc': 'Откривател',
+                'lbl-field-date': 'Дата',
+                'lbl-field-proto': 'Протокол',
+                'save-art-btn': '✓ Добави артефакт',
+                'btn-cancel-add': 'Откажи',
+                'add-modal-new': '+ Нов Артефакт',
+                'add-modal-edit': '✏ Редактирай',
+                // Artifact modal
+                'art-mat': 'Материал', 'art-disc': 'Откривател', 'art-gps': 'GPS', 'art-date': 'Дата',
+                'art-proto': 'Протокол', 'art-target': 'Target TDS',
+                'art-comments': 'Коментари',
+                'no-comments': 'Няма коментари',
+                'comment-ph': 'Добави коментар...',
+                'btn-edit-art': '✏ Редактирай',
+                'btn-like': '❤',
+                'btn-delete': '🗑 Изтрий',
+                // Arc detail
+                'arc-tds-journey': 'TDS Journey',
+                'arc-start': 'START ppt',
+                'arc-end': 'END ppt',
+                'arc-reduction': 'Намаление',
+                'lbl-notif-set': 'Настройки на известия',
+                'lbl-notif-email': 'Имейл за известия',
+                'btn-save-notif': '💾 Запази',
+                'btn-test-notif': '✉ Тест',
+                'lbl-notif-status': 'Системата ще изпраща имейл при критични нива или загуба на връзка.',
+                'notif-offline-sub': 'ASOA: Връзката е прекъсната',
+                'notif-offline-body': 'Връзката с ESP възела беше прекъсната в {time}',
+                'notif-critical-sub': 'ASOA: Критично ниво на водата!',
+                'notif-critical-body': 'Внимание! Нивото на водата достигна {wl}% в {time}.',
+                'notif-test-sub': 'ASOA Тестово Известие',
+                'notif-test-body': 'Това е тестов имейл от системата ASOA за проверка на конфигурацията.',
+                'notif-success-msg': 'Известието е изпратено по имейл',
+                'notif-err-invalid': 'Моля въведете валиден имейл!',
+                'notif-success-save': 'Имейлът е запазен успешно',
+                'notif-warn-no-email': 'Първо въведете и запазете имейл!',
+                'notif-info-test': 'Тестово известие е инициирано',
+                'toast-art-deleted': 'Артефактът е изтрит',
+                'toast-changes-saved': 'Измененията са запазени',
+                // Status
+                'status-online': 'ОНЛАЙН',
+                'status-offline': 'ОФЛАЙН',
+                // Confirm
+                'confirm-delete': 'Изтрий',
+                'confirm-exists': 'ID вече съществува!',
+                'confirm-too-big': 'Снимката е твърде голяма! Максимум 2MB.',
+                'confirm-required': 'Попълни всички задължителни полета!',
+                // Footer
+                'footer-days': 'дни',
+                'node-primary-tank': 'Основен Резервоар',
+                'node-dashboard': 'Мониторинг',
+                'nav-logout': 'Излез',
+                'btn-new-artifact': '+ Нов артефакт',
+                'map-points': 'точки',
+                'GLASS': 'СТЪКЛО', 'CERAMIC': 'КЕРАМИКА', 'STONE': 'КАМЪК', 'METAL': 'МЕТАЛ', 'WOOD': 'ДЪРВО',
+                'lbl-notif-set': 'Настройки на известия',
+                'lbl-notif-email': 'Имейл за известия',
+                'btn-save-notif': '💾 Запази',
+                'btn-test-notif': '✉ Тест',
+                'lbl-notif-status': 'Системата ще изпраща имейл при критични нива или загуба на връзка.',
+            },
+
+            en: {
+                flag: '🇬🇧', name: 'English',
+                'login-sub': 'Security Protocol Alpha-9',
+                'lbl-operator': 'Operator Identifier',
+                'lbl-access': 'Access Hash',
+                'login-err': '⚠ Wrong username or password',
+                'login-btn': '🔐 Authorize',
+                'btn-csv': '⬇ CSV',
+                'btn-emstop': '⛔ EMERGENCY STOP',
+                'nav-dashboard': 'TERMINAL',
+                'nav-discovery': 'ARCHIVE',
+                'nav-archive': 'HISTORY',
+                'nav-reports': 'REPORTS',
+                'nav-map': 'MAP',
+                'nav-settings': 'CONFIG',
+                'esp-online': 'ESP CONNECTED',
+                'esp-offline': 'ESP OFFLINE',
+                'banner-title': 'ESP offline — no sensor data',
+                'lbl-phase-title': 'Process Phase',
+                'lbl-prediction': 'Prediction',
+                'pred-no-data': 'Insufficient data for prediction',
+                'pred-no-fall': 'TDS not dropping — check sensor',
+                'pred-reached': 'Target TDS reached!',
+                'lbl-tds': 'Salinity (TDS)',
+                'lbl-ec': 'Conductivity (EC)',
+                'lbl-temp': 'Temperature',
+                'lbl-wl': 'Water Level',
+                'lbl-chart-title': 'Desalination Dynamics',
+                'lbl-hw-control': 'Hardware Control',
+                'auto-label': 'Auto Mode',
+                'auto-desc': 'System automatically manages valves based on TDS',
+                'lbl-r1': '💧 Drain Pump',
+                'lbl-r2': '🌊 Saltwater Valve',
+                'lbl-r3': '🔄 Freshwater Valve',
+                'lbl-active-proto': 'Active Protocol',
+                'lbl-plateau-analysis': 'Plateau Analysis',
+                'lbl-node-status': 'Node Status',
+                'lbl-mode-node': 'Mode',
+                'lbl-data-node': 'Data',
+                'lbl-points': 'points',
+                'lbl-session-node': 'Session',
+                'lbl-version-node': 'Version',
+                'phase0': 'Soaking',
+                'phase1': 'Active',
+                'phase2': 'Plateau',
+                'phase3': 'Finalizing',
+                'phase-names': ['Soaking', 'Active Desalination', 'Plateau', 'Finalizing'],
+                'pred-days': 'Remaining Days',
+                'pred-date': 'Expected Date',
+                'pred-rate': 'TDS Drop/Day',
+                'pred-conf': 'Accuracy',
+                'pred-accuracy-badge': '% ACCURACY',
+                'plateau-target-tpl': 'Target: {target} ppt // Δ < 1% over 21 days',
+                'plateau-done': '✓ PLATEAU',
+                'lbl-digital-archive': 'Digital Archive',
+                'btn-new-artifact': '+ New Artifact',
+                'art-search-ph': 'Search...',
+                'no-artifacts': 'No artifacts found',
+                'all': 'ALL',
+                'matGlass': '🔷 Glass', 'matCeramic': '🏺 Ceramic', 'matStone': '🪨 Stone', 'matMetal': '⚔️ Metal', 'matWood': '🪵 Wood',
+                'matGlassShort': 'Glass', 'matCeramicShort': 'Ceramic', 'matStoneShort': 'Stone', 'matMetalShort': 'Metal', 'matWoodShort': 'Wood',
+                'lbl-language': 'Language',
+                'lbl-completed-archive': 'Completed Projects Archive',
+                'arc-completed': 'Completed',
+                'arc-warnings': 'Warnings',
+                'arc-avg-drop': 'Avg TDS Drop',
+                'arc-total': 'Total Artifacts',
+                'arc-success': '✓ SUCCESS',
+                'arc-warning': '⚠ WARNING',
+                'lbl-reports-title': 'Reporting System',
+                'lbl-live-log': 'Live Sensor Log',
+                'th-time': 'Time',
+                'th-level': 'Level (%)',
+                'th-temp': 'Temp (°C)',
+                'awaiting-data': 'Awaiting data...',
+                'lbl-reports-by-artifact': 'Reports by Artifact',
+                'btn-report': '⬇ Report',
+                'lbl-map-title': 'Sonar Map',
+                'map-points': 'points',
+                'lbl-config-title': 'Configuration',
+                'lbl-esp-conn': 'ESP Connection',
+                'lbl-ws-addr': 'WebSocket Address',
+                'btn-reconnect': '🔄 Connect',
+                'lbl-status-set': 'Status',
+                'lbl-data-set': 'Data',
+                'lbl-interval-set': 'Interval',
+                'lbl-interval-val': '3 sec',
+                'lbl-reconnect-set': 'Reconnect',
+                'lbl-reconnect-val': '5 sec',
+                'lbl-mat-matrix': 'Materials Matrix',
+                'th-material': 'Material',
+                'th-mix': 'Mix',
+                'th-target': 'Target TDS',
+                'th-cycle': 'Cycle',
+                'th-status': 'Status',
+                'matrix-active': '● ACTIVE',
+                'matrix-standby': '○ STANDBY',
+                'lbl-sys-info': 'System Info',
+                'sys-version': 'Version',
+                'sys-operator': 'Operator',
+                'sys-protocol': 'Protocol',
+                'lbl-photo': 'Photo',
+                'lbl-choose-photo': '📷 Choose photo',
+                'lbl-photo-hint': 'JPG, PNG up to 2MB — or pick icon below',
+                'lbl-icon-fallback': 'Icon (if no photo)',
+                'lbl-field-id': 'ID',
+                'lbl-field-name': 'Name',
+                'lbl-field-mat': 'Material',
+                'lbl-field-disc': 'Discoverer',
+                'lbl-field-date': 'Date',
+                'lbl-field-proto': 'Protocol',
+                'save-art-btn': '✓ Add Artifact',
+                'btn-cancel-add': 'Cancel',
+                'add-modal-new': '+ New Artifact',
+                'add-modal-edit': '✏ Edit',
+                'art-mat': 'Material', 'art-disc': 'Discoverer', 'art-gps': 'GPS', 'art-date': 'Date',
+                'art-proto': 'Protocol', 'art-target': 'Target TDS',
+                'art-comments': 'Comments',
+                'no-comments': 'No comments',
+                'comment-ph': 'Add comment...',
+                'btn-edit-art': '✏ Edit',
+                'btn-like': '❤',
+                'btn-delete': '🗑 Delete',
+                'arc-tds-journey': 'TDS Journey',
+                'arc-start': 'START ppt',
+                'arc-end': 'END ppt',
+                'arc-reduction': 'Reduction',
+                'lbl-notif-set': 'Notification Settings',
+                'lbl-notif-email': 'Notification Email',
+                'btn-save-notif': '💾 Save',
+                'btn-test-notif': '✉ Test',
+                'lbl-notif-status': 'The system will send an email on critical levels or connection loss.',
+                'notif-offline-sub': 'ASOA: Connection Lost',
+                'notif-offline-body': 'Connection with ESP node was lost at {time}',
+                'notif-critical-sub': 'ASOA: Critical Water Level!',
+                'notif-critical-body': 'Warning! Water level reached {wl}% at {time}.',
+                'notif-test-sub': 'ASOA Test Notification',
+                'notif-test-body': 'This is a test email from the ASOA system to verify the configuration.',
+                'notif-success-msg': 'Notification sent via email',
+                'notif-err-invalid': 'Please enter a valid email!',
+                'notif-success-save': 'Email saved successfully',
+                'notif-warn-no-email': 'First enter and save an email!',
+                'notif-info-test': 'Test notification initiated',
+                'toast-art-deleted': 'Artifact deleted',
+                'toast-changes-saved': 'Changes saved',
+                'status-online': 'ONLINE',
+                'status-offline': 'OFFLINE',
+                'confirm-delete': 'Delete',
+                'confirm-exists': 'ID already exists!',
+                'confirm-too-big': 'Photo too large! Max 2MB.',
+                'confirm-required': 'Fill in all required fields!',
+                'footer-days': 'days',
+                'node-primary-tank': 'Primary Tank',
+                'node-dashboard': 'Dashboard',
+                'nav-logout': 'Logout',
+                'btn-new-artifact': '+ New Artifact',
+                'map-points': 'points',
+                'Глина': 'Clay', 'Бронз': 'Bronze', 'Керамика': 'Ceramic', 'Желязо': 'Iron', 'Стъкло': 'Glass', 'Камък': 'Stone', 'Олово': 'Lead',
+                'Керамичен Питос': 'Ceramic Pithos', 'Римски Секстант': 'Roman Sextant', 'Амфора - Фрагмент': 'Amphora - Fragment',
+                'Железен Накрайник': 'Iron Spearhead', 'Стъклена Флакончета': 'Glass Vials', 'Каменна Плочка': 'Stone Tablet',
+                'Бронзова Фибула': 'Bronze Fibula', 'Керамична Лампа': 'Ceramic Lamp', 'Стъклено Шише': 'Glass Bottle', 'Оловна Котва': 'Lead Anchor',
+                'Отличен образец.': 'Excellent specimen.', 'Успешно завършена десалинация.': 'Desalination completed successfully.',
+                'Плато на ден 14.': 'Plateau on day 14.', 'Пукнатина при ден 21.': 'Crack on day 21.', 'NaOH обработка — отличен резултат.': 'NaOH treatment — excellent result.',
+                'Използван за съхранение на зърно и зехтин през античността. Открит край древен търговски кораб.': 'Used to store grain and olive oil in antiquity. Found near an ancient merchant ship.',
+                'Рядък навигационен уред, вероятно потънал по време на буря край остров Св. Иван.': 'A rare navigational device, likely sunk during a storm near St. Ivan Island.',
+                'Класическа гръцка амфора за вино, открита полузаровена в пясъка край Черноморец.': 'Classic Greek wine amphora, found half-buried in the sand near Chernomorets.',
+                'Оръжие от късното средновековие, намерено в залива на Бургас, свидетелство за морска битка.': 'Late medieval weapon found in the Gulf of Burgas, evidence of a naval battle.',
+                'Изящен съд за парфюм от римската епоха, напълно запазен въпреки вековете под водата.': 'Exquisite Roman perfume vessel, perfectly preserved despite centuries underwater.',
+                'Част от храм или обществена сграда с частично запазен древногръцки надпис.': 'Part of a temple or public building with a partially preserved ancient Greek inscription.',
+                'Древна тракийска или римска брошка, използвана за защипване на наметала.': 'Ancient Thracian or Roman brooch, used to fasten cloaks.',
+                'Маслена лампа, осветявала пътя на моряци преди повече от две хилядолетия.': 'Oil lamp that lit the way for sailors more than two millennia ago.',
+                'Средновековен съд за вносни течности, покрит с красива патина от морската вода.': 'Medieval vessel for imported liquids, covered with a beautiful patina from the seawater.',
+                'Тежка антична котва от дървен кораб, разбивал се в подводните скали.': 'Heavy ancient anchor from a wooden ship that crashed into the underwater rocks.',
+            },
+
+            de: {
+                flag: '🇩🇪', name: 'Deutsch',
+                'login-sub': 'Sicherheitsprotokoll Alpha-9',
+                'lbl-operator': 'Operatorkennung',
+                'lbl-access': 'Zugangshash',
+                'login-err': '⚠ Falscher Benutzername oder Passwort',
+                'login-btn': '🔐 Autorisierung',
+                'btn-csv': '⬇ CSV',
+                'btn-emstop': '⛔ NOTFALL-STOP',
+                'nav-dashboard': 'TERMINAL',
+                'nav-discovery': 'ARCHIV',
+                'nav-archive': 'HISTORY',
+                'nav-reports': 'BERICHTE',
+                'nav-map': 'KARTE',
+                'nav-settings': 'KONFIG',
+                'esp-online': 'ESP VERBUNDEN',
+                'esp-offline': 'ESP OFFLINE',
+                'banner-title': 'ESP offline — keine Sensordaten',
+                'lbl-phase-title': 'Prozessphase',
+                'lbl-prediction': 'Vorhersage',
+                'pred-no-data': 'Unzureichende Daten für Vorhersage',
+                'pred-no-fall': 'TDS fällt nicht — Sensor prüfen',
+                'pred-reached': 'Ziel-TDS erreicht!',
+                'lbl-tds': 'Salzgehalt (TDS)',
+                'lbl-ec': 'Leitfähigkeit (EC)',
+                'lbl-temp': 'Temperatur',
+                'lbl-wl': 'Wasserstand',
+                'lbl-chart-title': 'Entsalzungsdynamik',
+                'lbl-hw-control': 'Hardware-Steuerung',
+                'auto-label': 'Auto-Modus',
+                'auto-desc': 'System steuert Ventile automatisch nach TDS',
+                'lbl-r1': '💧 Drainagepumpe',
+                'lbl-r2': '🌊 Salzwasserventil',
+                'lbl-r3': '🔄 Süßwasserventil',
+                'lbl-active-proto': 'Aktives Protokoll',
+                'lbl-plateau-analysis': 'Plateau-Analyse',
+                'lbl-node-status': 'Knotenstatus',
+                'lbl-mode-node': 'Modus',
+                'lbl-data-node': 'Daten',
+                'lbl-points': 'Punkte',
+                'lbl-session-node': 'Sitzung',
+                'lbl-version-node': 'Version',
+                'phase0': 'Einweichen',
+                'phase1': 'Aktiv',
+                'phase2': 'Plateau',
+                'phase3': 'Abschluss',
+                'phase-names': ['Einweichen', 'Aktive Entsalzung', 'Plateau', 'Abschluss'],
+                'pred-days': 'Verbleibende Tage',
+                'pred-date': 'Erwartetes Datum',
+                'pred-rate': 'TDS-Abfall/Tag',
+                'pred-conf': 'Genauigkeit',
+                'pred-accuracy-badge': '% GENAUIGKEIT',
+                'plateau-target-tpl': 'Ziel: {target} ppt // Δ < 1% über 21 Tage',
+                'plateau-done': '✓ PLATEAU',
+                'lbl-digital-archive': 'Digitales Archiv',
+                'btn-new-artifact': '+ Neues Artefakt',
+                'art-search-ph': 'Suchen...',
+                'no-artifacts': 'Keine Artefakte gefunden',
+                'all': 'ALLE',
+                'matGlass': '🔷 Glas', 'matCeramic': '🏺 Keramik', 'matStone': '🪨 Stein', 'matMetal': '⚔️ Metall', 'matWood': '🪵 Holz',
+                'matGlassShort': 'Glas', 'matCeramicShort': 'Keramik', 'matStoneShort': 'Stein', 'matMetalShort': 'Metal', 'matWoodShort': 'Holz',
+                'lbl-language': 'Sprache',
+                'lbl-completed-archive': 'Abgeschlossene Projekte',
+                'arc-completed': 'Abgeschlossen',
+                'arc-warnings': 'Warnungen',
+                'arc-avg-drop': 'Mittl. TDS-Abfall',
+                'arc-total': 'Gesamtartefakte',
+                'arc-success': '✓ ERFOLG',
+                'arc-warning': '⚠ WARNUNG',
+                'lbl-reports-title': 'Berichtssystem',
+                'lbl-live-log': 'Live-Sensorprotokoll',
+                'th-time': 'Zeit',
+                'th-level': 'Pegel (%)',
+                'th-temp': 'Temp (°C)',
+                'awaiting-data': 'Warte auf Daten...',
+                'lbl-reports-by-artifact': 'Berichte nach Artefakt',
+                'btn-report': '⬇ Bericht',
+                'lbl-map-title': 'Sonarkarte',
+                'map-points': 'Punkte',
+                'lbl-config-title': 'Konfiguration',
+                'lbl-esp-conn': 'ESP-Verbindung',
+                'lbl-ws-addr': 'WebSocket-Adresse',
+                'btn-reconnect': '🔄 Verbinden',
+                'lbl-status-set': 'Status',
+                'lbl-data-set': 'Daten',
+                'lbl-interval-set': 'Intervalle',
+                'lbl-interval-val': '3 Sek',
+                'lbl-reconnect-set': 'Reconnect',
+                'lbl-reconnect-val': '5 Sek',
+                'lbl-mat-matrix': 'Materialmatrix',
+                'th-material': 'Material',
+                'th-mix': 'Mischung',
+                'th-target': 'Ziel-TDS',
+                'th-cycle': 'Zyklus',
+                'th-status': 'Status',
+                'matrix-active': '● AKTIV',
+                'matrix-standby': '○ STANDBY',
+                'lbl-sys-info': 'Systeminfo',
+                'sys-version': 'Version',
+                'sys-operator': 'Operator',
+                'sys-protocol': 'Protokoll',
+                'lbl-photo': 'Foto',
+                'lbl-choose-photo': '📷 Foto wählen',
+                'lbl-photo-hint': 'JPG, PNG bis 2MB — oder Icon unten wählen',
+                'lbl-icon-fallback': 'Icon (falls kein Foto)',
+                'lbl-field-id': 'ID',
+                'lbl-field-name': 'Name',
+                'lbl-field-mat': 'Material',
+                'lbl-field-disc': 'Entdecker',
+                'lbl-field-date': 'Datum',
+                'lbl-field-proto': 'Protokoll',
+                'save-art-btn': '✓ Artefakt hinzufügen',
+                'btn-cancel-add': 'Abbrechen',
+                'add-modal-new': '+ Neues Artefakt',
+                'add-modal-edit': '✏ Bearbeiten',
+                'art-mat': 'Material', 'art-disc': 'Entdecker', 'art-gps': 'GPS', 'art-date': 'Datum',
+                'art-proto': 'Protokoll', 'art-target': 'Ziel-TDS',
+                'art-comments': 'Коментари',
+                'no-comments': 'Keine Kommentare',
+                'comment-ph': 'Kommentar hinzufügen...',
+                'btn-edit-art': '✏ Bearbeiten',
+                'btn-like': '❤',
+                'btn-delete': '🗑 Löschen',
+                'arc-tds-journey': 'TDS Verlauf',
+                'arc-start': 'START ppt',
+                'arc-end': 'END ppt',
+                'arc-reduction': 'Reduktion',
+                'status-online': 'ONLINE',
+                'status-offline': 'OFFLINE',
+                'confirm-delete': 'Löschen',
+                'confirm-exists': 'ID bereits vorhanden!',
+                'confirm-too-big': 'Foto zu groß! Max 2MB.',
+                'confirm-required': 'Alle Pflichtfelder ausfüllen!',
+                'footer-days': 'Tage',
+                'node-primary-tank': 'Haupttank',
+                'node-dashboard': 'Übersicht',
+                'nav-logout': 'Abmelden',
+                'btn-new-artifact': '+ Neues Artefact',
+                'map-points': 'Punkte',
+                'GLASS': 'GLAS', 'CERAMIC': 'KERAMIK', 'STONE': 'STEIN', 'METAL': 'METALL', 'WOOD': 'HOLZ',
+                'notif-offline-sub': 'ASOA: Verbindung verloren',
+                'notif-offline-body': 'Die Verbindung zum ESP-Knoten wurde um {time} unterbrochen',
+                'notif-critical-sub': 'ASOA: Kritischer Wasserstand!',
+                'notif-critical-body': 'Warnung! Der Wasserstand hat um {time} {wl}% erreicht.',
+                'notif-test-sub': 'ASOA Testbenachrichtigung',
+                'notif-test-body': 'Dies ist eine Test-E-Mail vom ASOA-System, um die Konfiguration zu überprüfen.',
+                'notif-success-msg': 'Benachrichtigung per E-Mail gesendet',
+                'notif-err-invalid': 'Bitte geben Sie eine gültige E-Mail-Adresse ein!',
+                'notif-success-save': 'E-Mail erfolgreich gespeichert',
+                'notif-warn-no-email': 'Geben Sie zuerst eine E-Mail-Adresse ein und speichern Sie diese!',
+                'notif-info-test': 'Testbenachrichtigung initiiert',
+                'toast-art-deleted': 'Artefakt gelöscht',
+                'toast-changes-saved': 'Änderungen gespeichert',
+                'Глина': 'Ton', 'Бронз': 'Bronze', 'Керамика': 'Keramik', 'Желязо': 'Eisen', 'Стъкло': 'Glas', 'Камък': 'Stein', 'Олово': 'Blei',
+                'Керамичен Питос': 'Keramik-Pithos', 'Римски Секстант': 'Römischer Sextant', 'Амфора - Фрагмент': 'Amphore - Fragment',
+                'Железен Накрайник': 'Eiserne Speerspitze', 'Стъклена Флакончета': 'Glasfläschchen', 'Каменна Плочка': 'Steintafel',
+                'Бронзова Фибула': 'Bronzefibel', 'Керамична Лампа': 'Keramiklampe', 'Стъклено Шише': 'Glasflasche', 'Оловна Котва': 'Bleianker',
+                'Отличен образец.': 'Ausgezeichnetes Exemplar.', 'Успешно завършена десалинация.': 'Entsalzung erfolgreich abgeschlossen.',
+                'Плато на ден 14.': 'Plateau an Tag 14.', 'Пукнатина при ден 21.': 'Riss an Tag 21.', 'NaOH обработка — отличен резултат.': 'NaOH-Behandlung — hervorragendes Ergebnis.',
+                'Използван за съхранение на зърно und зехтин през античността. Открит край древен търговски кораб.': 'Diente in der Antike zur Lagerung von Getreide und Olivenöl. Gefunden in der Nähe eines alten Handelsschiffs.',
+                'Рядък навигационен уред, вероятно потънал по време на буря край остров Св. Иван.': 'Ein rares Navigationsgerät, das wahrscheinlich während eines Sturms bei der Insel St. Ivan gesunken ist.',
+                'Класическа гръцка амфора за вино, открита полузаровена в пясъка край Черноморец.': 'Klassische griechische Weinamphore, halb im Sand bei Tschernomorez begraben gefunden.',
+                'Оръжие от късното средновековие, намерено в залива на Бургас, свидетелство за морска битка.': 'Spätmittelalterliche Waffe, gefunden im Golf von Burgas, Zeugnis einer Seeschlacht.',
+                'Изящен съд за парфюм от римската епоха, напълно запазен въпреки вековете под водата.': 'Exquisites römisches Parfümgefäß, das trotz jahrhundertelanger Wasserlagerung perfekt erhalten ist.',
+                'Част от храм или обществена сграда с teilweise erhaltenen altgriechischen Inschrift.': 'Teil eines Tempels oder öffentlichen Gebäudes mit einer teilweise erhaltenen altgriechischen Inschrift.',
+                'Древна тракийска или римска брошка, използвана за защипване на наметала.': 'Eine alte thrakische oder römische Brosche, die zum Befestigen von Umhängen verwendet wurde.',
+                'Маслена лампа, осветявала пътя на моряци преди повече от две хилядолетия.': 'Öllampe, die den Seeleuten vor mehr als zwei Jahrtausenden den Weg beleuchtete.',
+                'Средновековен съд за вносни течности, покрит mit einer wunderschönen Patina aus dem Meerwasser.': 'Mittelalterliches Gefäß für importierte Flüssigkeiten, bedeckt mit einer wunderschönen Patina aus dem Meerwasser.',
+                'Тежка антична котва от дървен кораб, разбивал се в подводните скали.': 'Schwerer antiker Anker eines Holzschiffes, das an Unterwasserfelsen zerschellte.',
+            },
+        };
+
+        let currentLang = 'bg';
+
+        function t(key) {
+            return LANGS[currentLang][key] || LANGS['bg'][key] || key;
+        }
+
+        function setLang(lang) {
+            currentLang = lang;
+            // Update all lang buttons (login + header)
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                const btnLang = btn.getAttribute('onclick').match(/setLang\('(\w+)'\)/)?.[1];
+                btn.classList.toggle('active', btnLang === lang);
+            });
+            applyTranslations();
+        }
+
+        function applyTranslations() {
+            const map = {
+                'login-sub-text': 'login-sub',
+                'lbl-operator': 'lbl-operator',
+                'lbl-access': 'lbl-access',
+                'login-btn-text': 'login-btn',
+                'btn-csv': 'btn-csv',
+                'btn-emstop': 'btn-emstop',
+                'lbl-phase-title': 'lbl-phase-title',
+                'lbl-prediction': 'lbl-prediction',
+                'pred-no-data': 'pred-no-data',
+                'lbl-tds': 'lbl-tds',
+                'lbl-ec': 'lbl-ec',
+                'lbl-temp': 'lbl-temp',
+                'lbl-wl': 'lbl-wl',
+                'lbl-chart-title': 'lbl-chart-title',
+                'lbl-hw-control': 'lbl-hw-control',
+                'auto-label': 'auto-label',
+                'auto-desc': 'auto-desc',
+                'lbl-r1': 'lbl-r1',
+                'lbl-r2': 'lbl-r2',
+                'lbl-r3': 'lbl-r3',
+                'lbl-active-proto': 'lbl-active-proto',
+                'lbl-plateau-analysis': 'lbl-plateau-analysis',
+                'lbl-node-status': 'lbl-node-status',
+                'lbl-mode-node': 'lbl-mode-node',
+                'lbl-data-node': 'lbl-data-node',
+                'lbl-points': 'lbl-points',
+                'lbl-session-node': 'lbl-session-node',
+                'lbl-version-node': 'lbl-version-node',
+                'ph0-lbl': 'phase0',
+                'ph1-lbl': 'phase1',
+                'ph2-lbl': 'phase2',
+                'ph3-lbl': 'phase3',
+                'lbl-digital-archive': 'lbl-digital-archive',
+                'btn-new-artifact': 'btn-new-artifact',
+                'lbl-completed-archive': 'lbl-completed-archive',
+                'lbl-reports-title': 'lbl-reports-title',
+                'lbl-live-log': 'lbl-live-log',
+                'th-time': 'th-time',
+                'th-level': 'th-level',
+                'th-temp': 'th-temp',
+                'lbl-reports-by-artifact': 'lbl-reports-by-artifact',
+                'lbl-map-title': 'lbl-map-title',
+                'lbl-config-title': 'lbl-config-title',
+                'lbl-esp-conn': 'lbl-esp-conn',
+                'lbl-ws-addr': 'lbl-ws-addr',
+                'btn-reconnect': 'btn-reconnect',
+                'lbl-status-set': 'lbl-status-set',
+                'lbl-data-set': 'lbl-data-set',
+                'lbl-interval-set': 'lbl-interval-set',
+                'lbl-interval-val': 'lbl-interval-val',
+                'lbl-reconnect-set': 'lbl-reconnect-set',
+                'lbl-reconnect-val': 'lbl-reconnect-val',
+                'lbl-mat-matrix': 'lbl-mat-matrix',
+                'th-material': 'th-material',
+                'th-mix': 'th-mix',
+                'th-target': 'th-target',
+                'th-cycle': 'th-cycle',
+                'th-status': 'th-status',
+                'lbl-sys-info': 'lbl-sys-info',
+                'lbl-photo': 'lbl-photo',
+                'lbl-choose-photo': 'lbl-choose-photo',
+                'lbl-photo-hint': 'lbl-photo-hint',
+                'lbl-icon-fallback': 'lbl-icon-fallback',
+                'lbl-field-id': 'lbl-field-id',
+                'lbl-field-name': 'lbl-field-name',
+                'lbl-field-mat': 'lbl-field-mat',
+                'lbl-field-disc': 'lbl-field-disc',
+                'lbl-field-date': 'lbl-field-date',
+                'lbl-field-proto': 'lbl-field-proto',
+                'save-art-btn': 'save-art-btn',
+                'btn-cancel-add': 'btn-cancel-add',
+                'banner-title': 'banner-title',
+                'lbl-language': 'lbl-language',
+                'node-name-esp': 'node-primary-tank',
+                'node-name-sys': 'node-dashboard',
+                'btn-new-artifact': 'btn-new-artifact',
+                'lbl-notif-set': 'lbl-notif-set',
+                'lbl-notif-email': 'lbl-notif-email',
+                'btn-save-notif': 'btn-save-notif',
+                'btn-test-notif': 'btn-test-notif',
+                'lbl-notif-status': 'lbl-notif-status',
+            };
+
+            for (const [elId, key] of Object.entries(map)) {
+                const el = document.getElementById(elId);
+                if (el) el.textContent = t(key);
+            }
+
+            // Login error — reset to correct message in current lang
+            const loginErr2 = document.getElementById('login-error');
+            if (loginErr2 && loginErr2.style.display !== 'none') loginErr2.textContent = t('login-err');
+
+            // Nav sidebar tooltips
+            const navPages = ['dashboard', 'discovery', 'archive', 'reports', 'map', 'settings'];
+            const navKeys = ['nav-dashboard', 'nav-discovery', 'nav-archive', 'nav-reports', 'nav-map', 'nav-settings'];
+            navPages.forEach((pg, i) => {
+                const btn = document.getElementById('nav-btn-' + pg);
+                if (btn) btn.title = t(navKeys[i]);
+            });
+
+            // Re-render sys info so labels update
+            renderSysInfo();
+
+            // Search placeholder
+            const searchEl = document.getElementById('art-search');
+            if (searchEl) searchEl.placeholder = t('art-search-ph');
+
+            // Protocol buttons
+            ['GLASS', 'CERAMIC', 'STONE', 'METAL', 'WOOD'].forEach(k => {
+                const keyMap = { GLASS: 'matGlass', CERAMIC: 'matCeramic', STONE: 'matStone', METAL: 'matMetal', WOOD: 'matWood' };
+                const el = document.getElementById('proto-' + k);
+                if (el) el.textContent = t(keyMap[k]);
+            });
+
+            // Filter buttons
+            document.getElementById('f-ALL').textContent = t('all');
+            document.getElementById('f-GLASS').textContent = t('matGlassShort');
+            document.getElementById('f-CERAMIC').textContent = t('matCeramicShort');
+            document.getElementById('f-STONE').textContent = t('matStoneShort');
+            document.getElementById('f-METAL').textContent = t('matMetalShort');
+            const fWood = document.getElementById('f-WOOD');
+            if (fWood) fWood.textContent = t('matWoodShort');
+
+            // ESP status
+            const espOnlineCur = espOnline;
+            document.getElementById('esp-label').textContent = espOnlineCur ? t('esp-online') : t('esp-offline');
+            document.getElementById('set-status').textContent = espOnlineCur ? t('status-online') : t('status-offline');
+
+            // Header title (keep current page)
+            const curPage = document.querySelector('.page.active');
+            if (curPage) {
+                const pageId = curPage.id.replace('page-', '');
+                const navMap = { dashboard: 'nav-dashboard', discovery: 'nav-discovery', archive: 'nav-archive', reports: 'nav-reports', map: 'nav-map', settings: 'nav-settings' };
+                document.getElementById('header-title').textContent = 'ASOA // ' + t(navMap[pageId] || 'nav-dashboard');
+            }
+
+            // Logout button tooltip
+            const logoutBtn = document.querySelector('#sidebar button[onclick="doLogout()"]');
+            if (logoutBtn) logoutBtn.title = t('nav-logout');
+
+            // Login error message (update if visible)
+            const loginErr = document.getElementById('login-error');
+            if (loginErr && loginErr.style.display !== 'none') loginErr.textContent = t('login-err');
+
+            // Re-render dynamic components
+            renderMatrix();
+            renderArtifacts();
+            renderArchive();
+            renderReportArtifacts();
+            updatePrediction();
+            updatePhase();
+            updateChart();
+        }
+
+        // ─── CONFIG ────────────────────────────────────────────────────────────────────
+        const ESP_WS_DEFAULT = 'ws://192.168.1.101:81';
+
+        const MODES = {
+            GLASS: { name: 'Стъкло', mix: '25%:75%', target: 12, cycle: 21, color: '#00f2ff', icon: '🔷' },
+            CERAMIC: { name: 'Керамика', mix: '50%:50%', target: 8, cycle: 14, color: '#ffea00', icon: '🏺' },
+            STONE: { name: 'Камък', mix: '75%:25%', target: 4, cycle: 7, color: '#00ff41', icon: '🪨' },
+            METAL: { name: 'Метал', mix: '100%:0%+NaOH', target: 1, cycle: 2, color: '#ff003c', icon: '⚔️' },
+            WOOD: { name: 'Дърво', mix: '10%:90%+GLYCOL', target: 6, cycle: 30, color: '#b87333', icon: '🪵' },
+        };
+
+        function getModeNames() {
+            return {
+                GLASS: { name: t('matGlassShort'), icon: '🔷' },
+                CERAMIC: { name: t('matCeramicShort'), icon: '🏺' },
+                STONE: { name: t('matStoneShort'), icon: '🪨' },
+                METAL: { name: t('matMetalShort'), icon: '⚔️' },
+                WOOD: { name: t('matWoodShort'), icon: '🪵' },
+            };
+        }
+
+        const EMOJIS = ['🏺', '🧭', '🏛️', '⚔️', '🔮', '📜', '💎', '🗡️', '🛡️', '⚗️', '🔱', '🪙', '🗿', '🧱'];
+
+        // ─── SUPABASE ─────────────────────────────────────────────────────────────────
+        const SUPABASE_URL = 'https://pbknxnckgeynczqssiwa.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_kRxBlciysxugngWUBGdNlg_iUKfzoNT';
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const DEFAULT_ARTIFACTS = [
+            { id: 'A-102', name: 'Керамичен Питос', mat: 'Глина', date: '2024-03-20', gps: '42.4251°N 27.7012°E', discoverer: 'Dr. Ivanova', img: '🏺', photo: null, mode: 'CERAMIC', likes: 14, comments: [{ user: 'Prof. Kolev', text: 'Отличен образец.' }], history: 'Използван за съхранение на зърно и зехтин през античността. Открит край древен търговски кораб.' },
+            { id: 'B-054', name: 'Римски Секстант', mat: 'Бронз', date: '2024-03-21', gps: '42.4312°N 27.6958°E', discoverer: 'Dr. Petrov', img: '🧭', photo: null, mode: 'METAL', likes: 22, comments: [], history: 'Рядък навигационен уред, вероятно потънал по време на буря край остров Св. Иван.' },
+            { id: 'C-221', name: 'Амфора - Фрагмент', mat: 'Керамика', date: '2024-03-19', gps: '42.4489°N 27.6543°E', discoverer: 'M. Georgieva', img: '🏛️', photo: null, mode: 'CERAMIC', likes: 8, comments: [], history: 'Класическа гръцка амфора за вино, открита полузаровена в пясъка край Черноморец.' },
+            { id: 'M-991', name: 'Железен Накрайник', mat: 'Желязо', date: '2024-03-22', gps: '42.4721°N 27.5312°E', discoverer: 'K. Stanchev', img: '⚔️', photo: null, mode: 'METAL', likes: 31, comments: [], history: 'Оръжие от късното средновековие, намерено в залива на Бургас, свидетелство за морска битка.' },
+            { id: 'G-033', name: 'Стъклена Флакончета', mat: 'Стъкло', date: '2024-03-23', gps: '42.4411°N 27.6821°E', discoverer: 'Dr. Ivanova', img: '🔮', photo: null, mode: 'GLASS', likes: 19, comments: [], history: 'Изящен съд за парфюм от римската епоха, напълно запазен въпреки вековете под водата.' },
+            { id: 'S-770', name: 'Каменна Плочка', mat: 'Камък', date: '2024-03-18', gps: '42.4180°N 27.6920°E', discoverer: 'Prof. Kolev', img: '📜', photo: null, mode: 'STONE', likes: 11, comments: [], history: 'Част от храм или обществена сграда с частично запазен древногръцки надпис.' },
+        ];
+
+        let artifacts = [...DEFAULT_ARTIFACTS];
+
+        const USERS = {
+            'admin': 'admin123',
+            'refers': 'thebestrefers',
+            'visitors': 'votemehano',
+            'drpetrov': 'petrov456',
+        };
+
+        async function loadArtifacts() {
+            try {
+                const { data, error } = await sb.from('artifacts').select('*').order('date', { ascending: false });
+                if (error) throw error;
+                if (data && data.length > 0) {
+                    artifacts = data.map(a => ({
+                        ...a,
+                        comments: Array.isArray(a.comments) ? a.comments : [],
+                        photo: a.photo || null,
+                    }));
+                } else {
+                    for (const a of DEFAULT_ARTIFACTS) {
+                        await sb.from('artifacts').upsert(a);
+                    }
+                }
+            } catch (e) {
+                const saved = localStorage.getItem('archeoiot_artifacts');
+                if (saved) artifacts = JSON.parse(saved);
+            }
+            renderArtifacts();
+            renderReportArtifacts();
+            renderMap();
+        }
+
+        async function saveArtifactToCloud(a) {
+            try {
+                const { error } = await sb.from('artifacts').upsert({
+                    id: a.id, name: a.name, mat: a.mat, date: a.date,
+                    gps: a.gps, discoverer: a.discoverer, img: a.img,
+                    photo: a.photo || null, mode: a.mode,
+                    likes: a.likes, comments: a.comments
+                });
+                if (error) throw error;
+            } catch (e) {
+                localStorage.setItem('archeoiot_artifacts', JSON.stringify(artifacts));
+            }
+        }
+
+        async function deleteArtifactFromCloud(id) {
+            try {
+                await sb.from('artifacts').delete().eq('id', id);
+            } catch (e) {
+                localStorage.setItem('archeoiot_artifacts', JSON.stringify(artifacts));
+            }
+        }
+
+        const archiveData = [
+            { id: 'ARC-001', name: 'Бронзова Фибула', mat: 'Бронз', img: '🔱', mode: 'METAL', startTds: 16.0, endTds: 0.4, startDate: '2024-01-10', endDate: '2024-01-14', discoverer: 'Dr. Petrov', gps: '42.4290°N 27.7210°E', notes: 'Успешно завършена десалинация.', outcome: 'success', history: 'Древна тракийска или римска брошка, използвана за защипване на наметала.' },
+            { id: 'ARC-002', name: 'Керамична Лампа', mat: 'Глина', img: '🏮', mode: 'CERAMIC', startTds: 16.0, endTds: 7.8, startDate: '2024-01-22', endDate: '2024-02-05', discoverer: 'Dr. Ivanova', gps: '42.4502°N 27.6321°E', notes: 'Плато на ден 14.', outcome: 'success', history: 'Маслена лампа, осветявала пътя на моряци преди повече от две хилядолетия.' },
+            { id: 'ARC-003', name: 'Стъклено Шише', mat: 'Стъкло', img: '🔮', mode: 'GLASS', startTds: 16.0, endTds: 12.1, startDate: '2024-02-12', endDate: '2024-03-05', discoverer: 'M. Georgieva', gps: '42.4810°N 27.4912°E', notes: 'Пукнатина при ден 21.', outcome: 'warning', history: 'Средновековен съд за вносни течности, покрит с красива патина от морската вода.' },
+            { id: 'ARC-004', name: 'Оловна Котва', mat: 'Олово', img: '⚓', mode: 'METAL', startTds: 16.0, endTds: 0.2, startDate: '2024-02-28', endDate: '2024-03-02', discoverer: 'K. Stanchev', gps: '42.4380°N 27.7090°E', notes: 'NaOH обработка — отличен резултат.', outcome: 'success', history: 'Тежка антична котва от дървен кораб, разбивал се в подводните скали.' },
+        ];
+
+        let sensorHistory = [];
+        let relayState = { r1: false, r2: false, r3: false };
+        let activeMode = 'CERAMIC';
+        let autoMode = false;
+        let espOnline = false;
+        let ws = null;
+        let filterMode = 'ALL';
+        let addForm = { img: '🏺', mode: 'CERAMIC', isEdit: false, editId: null };
+        let mapHighlight = null;
+        let operatorId = '';
+        let sessionStart = Date.now();
+        let tdsChart = null;
+        let offlineTimer = null;
+
+        // ─── AUDIO SYSTEM ──────────────────────────────────────────────────────────────
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            if (type === 'hover') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(800, now);
+                gain.gain.setValueAtTime(0.01, now);
+                osc.start(now); osc.stop(now + 0.05);
+            } else if (type === 'click') {
+                osc.type = 'square'; osc.frequency.setValueAtTime(1200, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                gain.gain.setValueAtTime(0.04, now); gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            } else if (type === 'alert' || type === 'error') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, now);
+                osc.frequency.setValueAtTime(450, now + 0.1);
+                gain.gain.setValueAtTime(0.08, now); gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if (type === 'success') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.1);
+                osc.frequency.setValueAtTime(783.99, now + 0.2);
+                gain.gain.setValueAtTime(0.05, now); gain.linearRampToValueAtTime(0, now + 0.4);
+                osc.start(now); osc.stop(now + 0.4);
+            }
+        }
+        document.addEventListener('click', e => { if (e.target.closest('button') || e.target.closest('.nav-btn')) playSound('click'); });
+        document.addEventListener('mouseover', e => { if (e.target.closest('button')) playSound('hover'); });
+
+        // ─── TOAST NOTIFICATIONS ───────────────────────────────────────────────────────
+        function showToast(msg, type = 'info', title = '') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success' ? '✓' : type === 'error' ? '⚠' : type === 'warning' ? '⚠' : 'ℹ';
+            const color = type === 'success' ? 'var(--green)' : type === 'error' ? 'var(--red)' : type === 'warning' ? 'var(--yellow)' : 'var(--cyan)';
+            toast.innerHTML = `<span style="font-size:20px;color:${color}">${icon}</span><div><strong style="display:block;margin-bottom:4px;color:${color}">${title || type.toUpperCase()}</strong>${t(msg) || msg}</div>`;
+            container.appendChild(toast);
+            playSound(type);
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // ─── LOGIN ─────────────────────────────────────────────────────────────────────
+        function doLogin() {
+            const id = document.getElementById('login-id').value.trim();
+            const pw = document.getElementById('login-pw').value.trim();
+            if (!id || !pw) return;
+
+            if (!USERS[id] || USERS[id] !== pw) {
+                let err = document.getElementById('login-error');
+                if (err) {
+                    err.style.display = 'block';
+                    err.textContent = t('login-err');
+                }
+                document.getElementById('login-pw').value = '';
+                document.getElementById('login-pw').focus();
+                return;
+            }
+
+            operatorId = id;
+            document.getElementById('login-screen').style.display = 'none';
+            let err = document.getElementById('login-error');
+            if (err) err.style.display = 'none';
+            initAll();
+        }
+
+        function doLogout() {
+            document.getElementById('login-screen').style.display = 'flex';
+            if (ws) ws.close();
+        }
+
+        // ─── INIT ─────────────────────────────────────────────────────────────────────
+        function initAll() {
+            initChart();
+            loadArtifacts();
+            renderArchive();
+            renderMatrix();
+            renderSysInfo();
+            setMode(activeMode);
+            connectWS(ESP_WS_DEFAULT);
+            document.getElementById('ws-input').value = ESP_WS_DEFAULT;
+            setInterval(updateClock, 1000);
+            setInterval(updateSession, 5000);
+
+            const savedTheme = localStorage.getItem('asoa_theme');
+            if (savedTheme) document.body.className = savedTheme;
+            document.getElementById('notif-email-input').value = notificationEmail;
+        }
+
+        // ─── CLOCK ─────────────────────────────────────────────────────────────────────
+        function updateClock() {
+            const now = new Date();
+            const localeMap = { bg: 'bg-BG', en: 'en-GB', de: 'de-DE' };
+            const loc = localeMap[currentLang] || 'bg-BG';
+            document.getElementById('footer-coords').textContent =
+                '43.2046°N 27.9105°E // ' + now.toLocaleTimeString(loc);
+        }
+
+        function updateSession() {
+            const sec = Math.floor((Date.now() - sessionStart) / 1000);
+            const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+            document.getElementById('session-time').textContent =
+                `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            document.getElementById('set-datacount').textContent = sensorHistory.length;
+            document.getElementById('data-count').textContent = sensorHistory.length;
+        }
+
+        // ─── MQTT ─────────────────────────────────────────────────────────────────────
+        const MQTT_TOPIC = 'archeoiot/abc123xyz';
+        let mqttClient = null;
+
+        function connectWS(url) {
+            document.getElementById('ws-url-label').textContent = 'MQTT: broker.hivemq.com // topic: ' + MQTT_TOPIC;
+
+            if (mqttClient) { try { mqttClient.end(); } catch (e) { } }
+
+            mqttClient = mqtt.connect('wss://broker.hivemq.com:8884/mqtt', {
+                clientId: 'archeoiot_web_' + Math.random().toString(16).slice(2, 8),
+                clean: true,
+                reconnectPeriod: 5000,
+            });
+
+            mqttClient.on('connect', () => {
+                setEspStatus(false);
+                mqttClient.subscribe(MQTT_TOPIC);
+            });
+
+            mqttClient.on('message', (topic, message) => {
+                try {
+                    const d = JSON.parse(message.toString());
+                    clearTimeout(offlineTimer);
+                    offlineTimer = setTimeout(() => setEspStatus(false), 15000);
+                    setEspStatus(true);
+
+                    const row = {
+                        time: new Date().toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                        tds: parseFloat(d.tds) || 0,
+                        ec: parseFloat(d.ec) || 0,
+                        temp: parseFloat(d.temp) || 0,
+                        wl: parseFloat(d.wl) || 85,
+                    };
+                    sensorHistory = [...sensorHistory, row].slice(-40);
+
+                    updateSensorUI(row);
+                    updateChart();
+                    updatePhase();
+                    updatePrediction();
+                    updateReportTable();
+                    if (row.wl > 95) {
+                        const sub = t('notif-critical-sub');
+                        const body = t('notif-critical-body').replace('{wl}', row.wl).replace('{time}', row.time);
+                        NotificationManager.send(sub, body);
+                    }
+                } catch (e) { }
+            });
+
+            mqttClient.on('error', () => setEspStatus(false));
+            mqttClient.on('offline', () => setEspStatus(false));
+        }
+
+        function reconnectWS() { connectWS(null); }
+
+        function setEspStatus(online) {
+            const wasOnline = espOnline;
+            espOnline = online;
+            const badge = document.getElementById('esp-badge');
+            const dot = document.getElementById('esp-dot');
+            const lbl = document.getElementById('esp-label');
+            const ban = document.getElementById('offline-banner');
+            const nd = document.getElementById('node-esp01');
+            const ndot = document.getElementById('node-dot');
+            const ntxt = document.getElementById('node-status-text');
+            const fot = document.getElementById('foot-esp');
+            const fdot = document.getElementById('foot-data');
+            const sstat = document.getElementById('set-status');
+
+            badge.className = 'badge ' + (online ? 'online' : 'offline');
+            dot.className = 'dot ' + (online ? 'green pulse' : 'red');
+            lbl.textContent = online ? t('esp-online') : t('esp-offline');
+            ban.className = 'offline-banner' + (online ? '' : ' show');
+            nd.className = 'node-card ' + (online ? 'online' : 'offline');
+            ndot.style.background = online ? 'var(--green)' : 'var(--red)';
+            ntxt.style.color = online ? 'var(--green)' : 'var(--red)';
+            ntxt.textContent = online ? t('status-online') : t('status-offline');
+            fot.style.background = online ? 'var(--green)' : 'var(--red)';
+            fdot.style.background = sensorHistory.length > 0 ? 'var(--green)' : 'var(--red)';
+            sstat.textContent = online ? t('status-online') : t('status-offline');
+            sstat.style.color = online ? 'var(--green)' : 'var(--red)';
+
+            document.querySelectorAll('.relay-btn').forEach(b => {
+                b.disabled = !online && !autoMode;
+            });
+
+            if (wasOnline && !online) {
+                const sub = t('notif-offline-sub');
+                const body = t('notif-offline-body').replace('{time}', new Date().toLocaleTimeString());
+                NotificationManager.send(sub, body);
+            }
+        }
+
+        // ─── SENSOR UI ─────────────────────────────────────────────────────────────────
+        function updateSensorUI(d) {
+            const maxTds = 20;
+            document.getElementById('val-tds').textContent = d.tds.toFixed(2);
+            document.getElementById('val-ec').textContent = d.ec.toFixed(2);
+            document.getElementById('val-temp').textContent = d.temp.toFixed(1);
+            document.getElementById('val-wl').textContent = Math.round(d.wl);
+            document.getElementById('bar-tds').style.width = Math.min(100, d.tds / maxTds * 100) + '%';
+            document.getElementById('bar-ec').style.width = Math.min(100, d.ec / 30 * 100) + '%';
+            document.getElementById('bar-temp').style.width = Math.min(100, d.temp / 40 * 100) + '%';
+            document.getElementById('bar-wl').style.width = d.wl + '%';
+            const mnames = getModeNames();
+            document.getElementById('node-mode').textContent = mnames[activeMode]?.name || activeMode;
+            document.getElementById('node-mode').style.color = MODES[activeMode].color;
+        }
+
+        // ─── CHART ─────────────────────────────────────────────────────────────────────
+        function initChart() {
+            const ctx = document.getElementById('tds-chart').getContext('2d');
+            tdsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'TDS (ppt)', data: [], borderColor: '#00f2ff', backgroundColor: 'rgba(0,242,255,0.08)', borderWidth: 2, fill: true, tension: 0.4, pointRadius: 0 },
+                        { label: 'Temp (°C)', data: [], borderColor: '#ffea00', backgroundColor: 'rgba(255,234,0,0.06)', borderWidth: 1.5, fill: true, tension: 0.4, pointRadius: 0 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, animation: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#07070a', borderColor: 'rgba(0,242,255,0.2)', borderWidth: 1,
+                            titleColor: '#00f2ff', bodyColor: '#888',
+                            titleFont: { family: "'Share Tech Mono', monospace", size: 10 },
+                            bodyFont: { family: "'Share Tech Mono', monospace", size: 10 },
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#1a1a2e', font: { family: "'Share Tech Mono',monospace", size: 8 }, maxTicksLimit: 8 }, grid: { color: 'rgba(13,13,26,0.8)' } },
+                        y: { ticks: { color: '#1a1a2e', font: { family: "'Share Tech Mono',monospace", size: 8 } }, grid: { color: 'rgba(13,13,26,0.8)' } }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            if (!tdsChart) return;
+            tdsChart.data.labels = sensorHistory.map(r => r.time);
+            tdsChart.data.datasets[0].data = sensorHistory.map(r => r.tds);
+            tdsChart.data.datasets[1].data = sensorHistory.map(r => r.temp);
+            tdsChart.update('none');
+        }
+
+        // ─── PHASE ─────────────────────────────────────────────────────────────────────
+        function updatePhase() {
+            if (!sensorHistory.length) {
+                document.getElementById('phase-badge').textContent = t('phase-names')[0];
+                return;
+            }
+            const latest = sensorHistory[sensorHistory.length - 1];
+            const target = MODES[activeMode].target;
+            const pct = Math.min(100, Math.max(0, ((16 - latest.tds) / (16 - target)) * 100));
+            const delta = sensorHistory.length > 5
+                ? Math.abs(sensorHistory[sensorHistory.length - 1].tds - sensorHistory[sensorHistory.length - 6].tds)
+                : null;
+            const plateau = delta !== null && delta < 0.05;
+            const phaseIdx = pct < 8 ? 0 : pct < 75 ? 1 : plateau ? 3 : 2;
+            const phaseNames = t('phase-names');
+            const colors = ['#00f2ff', '#ffea00', '#ff7c00', '#00ff41'];
+
+            for (let i = 0; i < 4; i++) {
+                const done = i < phaseIdx;
+                const active = i === phaseIdx;
+                const ipct = active ? (i === 0 ? pct * 10 : i === 1 ? pct : i === 2 ? (plateau ? 100 : 80) : 100) : done ? 100 : 0;
+                document.getElementById(`ph${i}-bar`).style.width = ipct + '%';
+                document.getElementById(`ph${i}-lbl`).style.color = active ? '#fff' : done ? '#444' : '#222';
+                if (active) document.getElementById(`ph${i}-pct`).textContent = Math.round(ipct) + '%';
+                else document.getElementById(`ph${i}-pct`).textContent = '';
+            }
+
+            const badge = document.getElementById('phase-badge');
+            badge.textContent = phaseNames[phaseIdx];
+            badge.style.color = colors[phaseIdx];
+            badge.style.borderColor = colors[phaseIdx] + '44';
+            badge.style.background = colors[phaseIdx] + '10';
+
+            document.getElementById('plateau-fill').style.width = pct + '%';
+            if (plateau) {
+                document.getElementById('plateau-fill').style.background = 'var(--green)';
+                document.getElementById('plateau-val').textContent = t('plateau-done');
+                document.getElementById('plateau-val').style.color = 'var(--green)';
+            } else {
+                document.getElementById('plateau-fill').style.background = 'var(--yellow)';
+                document.getElementById('plateau-val').textContent = pct.toFixed(1) + '%';
+                document.getElementById('plateau-val').style.color = 'var(--yellow)';
+            }
+        }
+
+        // ─── PREDICTION ────────────────────────────────────────────────────────────────
+        function updatePrediction() {
+            const el = document.getElementById('pred-content');
+            const bc = document.getElementById('pred-conf-badge');
+
+            if (sensorHistory.length < 6) {
+                el.innerHTML = `<div style="font-size:10px;color:var(--dim);font-style:italic">${t('pred-no-data')}</div>`;
+                bc.innerHTML = '';
+                return;
+            }
+            const data = sensorHistory.slice(-Math.min(15, sensorHistory.length));
+            const n = data.length;
+            let sx = 0, sy = 0, sxy = 0, sx2 = 0;
+            data.forEach((s, i) => { sx += i; sy += s.tds; sxy += i * s.tds; sx2 += i * i; });
+            const slope = (n * sxy - sx * sy) / (n * sx2 - sx * sx);
+            if (slope >= 0) {
+                el.innerHTML = `<div style="font-size:10px;color:var(--dim)">${t('pred-no-fall')}</div>`;
+                return;
+            }
+            const intercept = (sy - slope * sx) / n;
+            const target = MODES[activeMode].target;
+            const stepsLeft = (target - intercept) / slope - (n - 1);
+            if (stepsLeft <= 0) {
+                el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;color:var(--green)"><span>✓</span><span style="font-size:11px;font-weight:bold;text-transform:uppercase">${t('pred-reached')}</span></div>`;
+                return;
+            }
+            const days = (stepsLeft * 30 / 1440).toFixed(1);
+            const conf = Math.min(97, Math.max(55, Math.round(90 - stepsLeft * 0.015)));
+            const date = new Date(Date.now() + days * 86400000).toLocaleDateString('bg-BG');
+            const rate = ((-slope) * 48).toFixed(3);
+
+            bc.innerHTML = `<span style="font-size:8px;color:var(--orange);font-weight:bold;border:1px solid rgba(255,124,0,0.3);padding:2px 8px">${conf}${t('pred-accuracy-badge')}</span>`;
+
+            el.innerHTML = `
+    <div class="pred-grid">
+      <div class="pred-item"><div class="pred-label">${t('pred-days')}</div><div class="pred-value" style="color:var(--orange)">${days}</div><div class="pred-unit">${t('footer-days')}</div><div class="pred-accent" style="background:var(--orange)"></div></div>
+      <div class="pred-item"><div class="pred-label">${t('pred-date')}</div><div class="pred-value" style="color:var(--cyan);font-size:13px">${date}</div><div class="pred-accent" style="background:var(--cyan)"></div></div>
+      <div class="pred-item"><div class="pred-label">${t('pred-rate')}</div><div class="pred-value" style="color:var(--green)">${rate}</div><div class="pred-unit">ppt/d</div><div class="pred-accent" style="background:var(--green)"></div></div>
+      <div class="pred-item"><div class="pred-label">${t('pred-conf')}</div><div class="pred-value" style="color:var(--yellow)">${conf}</div><div class="pred-unit">%</div><div class="pred-accent" style="background:var(--yellow)"></div></div>
+    </div>`;
+        }
+
+        // ─── RELAY ─────────────────────────────────────────────────────────────────────
+        function toggleRelay(id) {
+            if (!espOnline && !autoMode) return;
+            relayState[id] = !relayState[id];
+            updateRelayUI();
+        }
+
+        function sendRelay(id, state) {
+            if (ws && ws.readyState === WebSocket.OPEN)
+                ws.send(JSON.stringify({ relay: id, state: state ? 'on' : 'off' }));
+        }
+
+        function emergencyStop() {
+            Object.keys(relayState).forEach(k => { relayState[k] = false; sendRelay(k, false); });
+            if (ws && ws.readyState === WebSocket.OPEN)
+                ws.send(JSON.stringify({ emergency: true }));
+            updateRelayUI();
+        }
+
+        function updateRelayUI() {
+            ['r1', 'r2', 'r3'].forEach(id => {
+                const on = relayState[id];
+                const btn = document.getElementById(id + '-btn');
+                const tog = document.getElementById(id + '-tog');
+                if (!btn) return;
+                btn.className = 'relay-btn' + (on ? ' on' : '');
+                tog.className = 'toggle' + (on ? ' on' : '');
+                btn.disabled = !espOnline && !autoMode;
+            });
+        }
+
+        // ─── AUTO MODE ─────────────────────────────────────────────────────────────────
+        function toggleAuto() {
+            autoMode = !autoMode;
+            const tog = document.getElementById('auto-toggle');
+            const lbl = document.getElementById('auto-label');
+            const desc = document.getElementById('auto-desc');
+            const box = document.getElementById('auto-box');
+            tog.className = 'toggle' + (autoMode ? ' on' : '');
+            lbl.style.color = autoMode ? 'var(--cyan)' : 'var(--dim)';
+            desc.style.display = autoMode ? 'block' : 'none';
+            box.style.borderColor = autoMode ? 'var(--cyan)' : 'var(--border)';
+            box.style.background = autoMode ? 'rgba(0,242,255,0.04)' : '';
+            document.getElementById('relay-panel').style.opacity = autoMode ? '0.4' : '1';
+            document.getElementById('relay-panel').style.pointerEvents = autoMode ? 'none' : 'auto';
+        }
+
+        // ─── MODE ──────────────────────────────────────────────────────────────────────
+        function setMode(mode) {
+            activeMode = mode;
+            const m = MODES[mode];
+            const mnames = getModeNames();
+            Object.keys(MODES).forEach(k => {
+                const btn = document.getElementById('proto-' + k);
+                const mb = document.getElementById('add-proto-' + k);
+                if (btn) {
+                    btn.textContent = mnames[k] ? mnames[k].icon + ' ' + mnames[k].name : k;
+                    btn.style.color = k === mode ? '#000' : 'var(--dim)';
+                    btn.style.background = k === mode ? MODES[k].color : '';
+                    btn.style.borderColor = k === mode ? MODES[k].color : 'var(--border)';
+                }
+                if (mb) {
+                    mb.textContent = mnames[k] ? mnames[k].icon + ' ' + mnames[k].name : k;
+                    mb.style.color = k === mode ? '#000' : 'var(--dim)';
+                    mb.style.background = k === mode ? MODES[k].color : '';
+                    mb.style.borderColor = k === mode ? MODES[k].color : 'var(--border)';
+                }
+            });
+            const tpl = t('plateau-target-tpl').replace('{target}', m.target);
+            document.getElementById('plateau-target').textContent = tpl;
+            if (tdsChart) tdsChart.update();
+            renderMatrix();
+        }
+
+        // ─── EXPORT CSV ────────────────────────────────────────────────────────────────
+        function exportCSV() {
+            const csv = 'Time,TDS,EC,Temp,WaterLevel\n' +
+                sensorHistory.map(r => `${r.time},${r.tds},${r.ec},${r.temp},${r.wl}`).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            a.download = 'ArcheoIoT_' + new Date().toISOString().slice(0, 10) + '.csv';
+            a.click();
+        }
+
+        // ─── DATA EXPORT / IMPORT ────────────────────────────────────────────────────────
+        function exportDataDB() {
+            const data = JSON.stringify(artifacts, null, 2);
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+            a.download = 'ASOA_DigitalArchive.json';
+            a.click();
+            showToast('Архивът е експортиран успешно', 'success');
+        }
+
+        function importDataDB(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (!Array.isArray(parsed)) throw new Error('Invalid format');
+                    artifacts = parsed;
+                    localStorage.setItem('archeoiot_artifacts', JSON.stringify(artifacts));
+                    renderArtifacts();
+                    renderReportArtifacts();
+                    renderMap();
+                    showToast('Архивът е импортиран', 'success');
+                } catch (err) {
+                    showToast('Грешен JSON файлов формат!', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ─── THEMES ────────────────────────────────────────────────────────────────────
+        function switchTheme(t) {
+            document.body.className = t;
+            localStorage.setItem('asoa_theme', t);
+            showToast('Визуалната тема е променена', 'info', 'UI THEME');
+        }
+
+        // ─── REPORT TABLE ──────────────────────────────────────────────────────────────
+        function updateReportTable() {
+            const rows = [...sensorHistory].reverse().slice(0, 24);
+            document.getElementById('report-table').innerHTML = rows.map(r => `
+    <tr>
+      <td style="color:var(--cyan);font-weight:bold">${r.time}</td>
+      <td class="right" style="color:var(--cyan)">${r.tds.toFixed(2)}</td>
+      <td class="right" style="color:var(--green)">${r.ec.toFixed(2)}</td>
+      <td class="right" style="color:var(--yellow)">${r.temp.toFixed(1)}</td>
+      <td class="right" style="color:#888">${Math.round(r.wl)}</td>
+    </tr>`).join('') ||
+                `<tr><td colspan="5" style="text-align:center;color:var(--dim);padding:12px">${t('awaiting-data')}</td></tr>`;
+        }
+
+        function renderReportArtifacts() {
+            document.getElementById('report-artifacts').innerHTML = artifacts.map(a => `
+    <div style="display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);padding:12px;margin-bottom:6px;transition:border-color 0.2s"
+      onmouseover="this.style.borderColor='rgba(255,234,0,0.2)'"
+      onmouseout="this.style.borderColor='var(--border)'">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:24px">${a.img}</span>
+        <div>
+          <div style="font-size:8px;color:var(--yellow);font-weight:bold;letter-spacing:0.15em">${a.id}</div>
+          <div style="font-size:11px;color:#fff;font-weight:bold;text-transform:uppercase">${t(a.name)}</div>
+        </div>
+      </div>
+      <button class="btn btn-yellow" onclick="downloadReport('${a.id}')">${t('btn-report')}</button>
+    </div>`).join('');
+        }
+
+        function downloadReport(id) {
+            const a = artifacts.find(x => x.id === id);
+            if (!a) return;
+            const m = MODES[a.mode];
+            const latest = sensorHistory.length > 0 ? sensorHistory[sensorHistory.length - 1] : null;
+            const txt = `ARCHEO-IOT ARTIFACT REPORT\n${'='.repeat(50)}\nID: ${a.id}\nName: ${a.name}\nMaterial: ${a.mat}\nDiscoverer: ${a.discoverer}\nGPS: ${a.gps}\nDate: ${a.date}\nProtocol: ${m.name}\nTarget TDS: ${m.target} ppt\n\nLIVE DATA:\nTDS: ${latest ? latest.tds.toFixed(2) : '—'} ppt\nEC: ${latest ? latest.ec.toFixed(2) : '—'} mS/cm\nTemp: ${latest ? latest.temp.toFixed(1) : '—'} °C\n\nGenerated: ${new Date().toISOString()}\nArcheo-IoT v1.0`;
+            const el = document.createElement('a');
+            el.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain' }));
+            el.download = `Report_${id}.txt`;
+            el.click();
+        }
+
+        // ─── ARTIFACTS ─────────────────────────────────────────────────────────────────
+        function renderArtifacts() {
+            const q = document.getElementById('art-search').value.toLowerCase();
+            const filtered = artifacts.filter(a =>
+                (filterMode === 'ALL' || a.mode === filterMode) &&
+                (!q || a.name.toLowerCase().includes(q) || a.id.toLowerCase().includes(q) || a.mat.toLowerCase().includes(q))
+            );
+            document.getElementById('artifact-grid').innerHTML = filtered.length ? filtered.map(a => {
+                const m = MODES[a.mode];
+                return `
+    <div class="artifact-card" onclick="openArtifact('${a.id}')">
+      <div class="artifact-emoji" style="${a.photo ? 'padding:0' : ''}">${a.photo ? '<img src="' + a.photo + '" style="width:100%;height:100%;object-fit:cover">' : a.img}</div>
+      <div class="artifact-info">
+        <div class="artifact-id" style="color:${m.color}">${a.id}</div>
+        <div class="artifact-name">${t(a.name)}</div>
+        <div class="artifact-meta">
+          <span>📍 ${t(a.mat)}</span>
+          <span>❤ ${a.likes}</span>
+        </div>
+      </div>
+    </div>`;
+            }).join('') : `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--dim);text-transform:uppercase;font-size:11px">${t('no-artifacts')}</div>`;
+        }
+
+        function setFilter(f) {
+            filterMode = f;
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.toggle('active', b.id === 'f-' + f);
+            });
+            renderArtifacts();
+        }
+
+        function openArtifact(id) {
+            const a = artifacts.find(x => x.id === id);
+            if (!a) return;
+            const m = MODES[a.mode];
+            const mnames = getModeNames();
+            document.getElementById('art-modal-title').textContent = a.id + ' // ' + t(a.name);
+            document.getElementById('art-modal-body').innerHTML = `
+    <div style="text-align:center;font-size:56px;padding:${a.photo ? '0' : '24px'};background:var(--bg3);margin-bottom:16px;border:1px solid var(--border);overflow:hidden;max-height:200px">${a.photo ? '<img src="' + a.photo + '" style="width:100%;max-height:200px;object-fit:cover">' : a.img}</div>
+    <div class="form-grid" style="margin-bottom:16px">
+      ${[[t('art-mat'), t(a.mat)], [t('art-disc'), a.discoverer], [t('art-gps'), a.gps], [t('art-date'), a.date],
+                [t('art-proto'), mnames[a.mode]?.name || a.mode], [t('art-target'), m.target + ' ppt']].map(([l, v]) => `
+      <div style="background:var(--bg3);border:1px solid var(--border);padding:10px">
+        <div style="font-size:8px;color:#555;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px">${l}</div>
+        <div style="font-size:11px;color:#fff;font-weight:bold">${v}</div>
+      </div>`).join('')}
+    </div>
+    <div style="background:rgba(0,242,255,0.03);border:1px solid var(--border);padding:12px;margin-bottom:16px;font-size:11px;color:#ccc;line-height:1.6">
+       ${t(a.history)}
+    </div>
+    <div>
+      <div style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">${t('art-comments')} (${a.comments.length})</div>
+      <div id="comments-${id}" style="max-height:120px;overflow-y:auto;margin-bottom:8px">
+        ${a.comments.map(c => `
+          <div class="comment-box">
+            <div class="comment-user">${c.user}</div>
+            <div class="comment-text">${t(c.text)}</div>
+          </div>`).join('') || `<div style="font-size:10px;color:var(--dim);font-style:italic">${t('no-comments')}</div>`}
+      </div>
+      <div class="comment-input-row">
+        <input class="comment-input" id="cmt-${id}" placeholder="${t('comment-ph')}"
+          onkeydown="if(event.key==='Enter')addComment('${id}')">
+        <button class="comment-send" onclick="addComment('${id}')">➤</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-cyan" onclick="openEditArtifact('${id}')">${t('btn-edit-art')}</button>
+      <button class="btn" style="border-color:var(--border);color:var(--dim)"
+        onclick="likeArtifact('${id}')">❤ ${a.likes}</button>
+      <button class="btn" style="border-color:rgba(255,0,60,0.3);color:var(--red);margin-left:auto"
+        onclick="deleteArtifact('${id}')">${t('btn-delete')}</button>
+    </div>`;
+            openModal('art-modal');
+        }
+
+        async function addComment(id) {
+            const inp = document.getElementById('cmt-' + id);
+            if (!inp || !inp.value.trim()) return;
+            const a = artifacts.find(x => x.id === id);
+            if (!a) return;
+            a.comments.push({ user: operatorId || 'Operator', text: inp.value });
+            inp.value = '';
+            await saveArtifactToCloud(a);
+            openArtifact(id);
+        }
+
+        async function likeArtifact(id) {
+            const a = artifacts.find(x => x.id === id);
+            if (a) { a.likes++; await saveArtifactToCloud(a); openArtifact(id); renderArtifacts(); }
+        }
+
+        async function deleteArtifact(id) {
+            if (!confirm(t('confirm-delete') + ' ' + id + '?')) return;
+            artifacts = artifacts.filter(x => x.id !== id);
+            await deleteArtifactFromCloud(id);
+            closeModal('art-modal');
+            renderArtifacts();
+            renderReportArtifacts();
+            renderMap();
+            showToast('toast-art-deleted', 'warning', 'ARCHIVE ITEM REMOVED');
+        }
+
+        // ─── ADD / EDIT ARTIFACT ───────────────────────────────────────────────────────
+        function openAddArtifact() {
+            addForm = { img: '🏺', mode: 'CERAMIC', isEdit: false, editId: null, photo: null };
+            document.getElementById('photo-preview').innerHTML = '🏺';
+            document.getElementById('photo-preview').style.padding = '';
+            const fi = document.getElementById('f-photo'); if (fi) fi.value = '';
+            document.getElementById('add-modal-title').textContent = t('add-modal-new');
+            document.getElementById('save-art-btn').textContent = t('save-art-btn');
+            document.getElementById('btn-cancel-add').textContent = t('btn-cancel-add');
+            document.getElementById('f-id').disabled = false;
+            document.getElementById('f-id').value = '';
+            document.getElementById('f-name').value = '';
+            document.getElementById('f-mat').value = '';
+            document.getElementById('f-disc').value = '';
+            document.getElementById('f-gps').value = '';
+            document.getElementById('f-date').value = new Date().toISOString().slice(0, 10);
+            renderEmojiPick();
+            renderAddProto();
+            openModal('add-modal');
+        }
+
+        function openEditArtifact(id) {
+            const a = artifacts.find(x => x.id === id);
+            if (!a) return;
+            addForm = { img: a.img, mode: a.mode, isEdit: true, editId: id, photo: a.photo || null };
+            const prev = document.getElementById('photo-preview');
+            if (a.photo) { prev.innerHTML = '<img src="' + a.photo + '" style="width:100%;height:100%;object-fit:cover">'; prev.style.padding = '0'; }
+            else { prev.innerHTML = a.img; prev.style.padding = ''; }
+            document.getElementById('add-modal-title').textContent = t('add-modal-edit') + ' // ' + id;
+            document.getElementById('save-art-btn').textContent = t('btn-edit-art');
+            document.getElementById('btn-cancel-add').textContent = t('btn-cancel-add');
+            document.getElementById('f-id').disabled = true;
+            document.getElementById('f-id').value = a.id;
+            document.getElementById('f-name').value = a.name;
+            document.getElementById('f-mat').value = a.mat;
+            document.getElementById('f-disc').value = a.discoverer;
+            document.getElementById('f-gps').value = a.gps;
+            document.getElementById('f-date').value = a.date;
+            closeModal('art-modal');
+            renderEmojiPick();
+            renderAddProto();
+            openModal('add-modal');
+        }
+
+        function renderEmojiPick() {
+            document.getElementById('emoji-pick').innerHTML = EMOJIS.map(e => `
+    <button class="emoji-opt ${e === addForm.img ? 'selected' : ''}" onclick="pickEmoji('${e}')">${e}</button>`).join('');
+        }
+
+        function pickEmoji(e) {
+            addForm.img = e;
+            addForm.photo = null;
+            document.getElementById('photo-preview').innerHTML = e;
+            document.getElementById('photo-preview').style.padding = '';
+            renderEmojiPick();
+        }
+
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) { showToast('confirm-too-big', 'warning'); return; }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64 = e.target.result;
+                addForm.photo = base64;
+                const prev = document.getElementById('photo-preview');
+                prev.innerHTML = '<img src="' + base64 + '" style="width:100%;height:100%;object-fit:cover">';
+                prev.style.padding = '0';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderAddProto() {
+            const grid = document.getElementById('add-proto-grid');
+            const mnames = getModeNames();
+            grid.innerHTML = Object.entries(MODES).map(([k, m]) => `
+    <button class="proto-btn" id="add-proto-${k}" onclick="pickAddMode('${k}')"
+      style="color:${k === addForm.mode ? '#000' : 'var(--dim)'};background:${k === addForm.mode ? m.color : ''};border-color:${k === addForm.mode ? m.color : 'var(--border)'}">
+      ${mnames[k]?.icon || m.icon} ${mnames[k]?.name || k}
+    </button>`).join('');
+        }
+
+        function pickAddMode(m) {
+            addForm.mode = m;
+            renderAddProto();
+        }
+
+        async function saveArtifact() {
+            const id = document.getElementById('f-id').value.trim();
+            const name = document.getElementById('f-name').value.trim();
+            const mat = document.getElementById('f-mat').value.trim();
+            const disc = document.getElementById('f-disc').value.trim();
+            const gps = document.getElementById('f-gps').value.trim();
+            const date = document.getElementById('f-date').value;
+            if (!id || !name || !mat || !disc || !date) { showToast('confirm-required', 'warning'); return; }
+
+            const photo = addForm.photo || null;
+
+            if (addForm.isEdit) {
+                const a = artifacts.find(x => x.id === addForm.editId);
+                if (a) {
+                    a.name = name; a.mat = mat; a.discoverer = disc; a.gps = gps;
+                    a.date = date; a.img = addForm.img; a.mode = addForm.mode;
+                    if (photo) a.photo = photo;
+                    await saveArtifactToCloud(a);
+                }
+            } else {
+                if (artifacts.find(x => x.id === id)) { showToast('confirm-exists', 'error'); return; }
+                const newArt = { id, name, mat, date, gps, discoverer: disc, img: addForm.img, photo, mode: addForm.mode, likes: 0, comments: [], history: 'Awaiting analysis...' };
+                artifacts.push(newArt);
+                await saveArtifactToCloud(newArt);
+            }
+            addForm.photo = null;
+            closeModal('add-modal');
+            renderArtifacts();
+            renderReportArtifacts();
+            renderMap();
+            showToast('toast-changes-saved', 'success');
+        }
+
+        // ─── ARCHIVE ───────────────────────────────────────────────────────────────────
+        function renderArchive() {
+            document.getElementById('archive-list').innerHTML = archiveData.map(arc => {
+                const m = MODES[arc.mode];
+                const redu = (((arc.startTds - arc.endTds) / arc.startTds) * 100).toFixed(1);
+                const days = Math.round((new Date(arc.endDate) - new Date(arc.startDate)) / 86400000);
+                const succ = arc.outcome === 'success';
+                return `
+    <div class="arc-item" onclick="openArcDetail('${arc.id}')">
+      <div class="arc-stripe" style="background:${succ ? 'var(--green)' : 'var(--yellow)'}"></div>
+      <div class="arc-emoji">${arc.img}</div>
+      <div class="arc-info">
+        <div class="arc-id" style="color:${m.color}">${arc.id}
+          <span class="arc-badge" style="color:${succ ? 'var(--green)' : 'var(--yellow)'};border-color:${succ ? 'rgba(0,255,65,0.3)' : 'rgba(255,234,0,0.3)'};background:${succ ? 'rgba(0,255,65,0.08)' : 'rgba(255,234,0,0.08)'}">
+            ${succ ? t('arc-success') : t('arc-warning')}
+          </span>
+        </div>
+        <div class="arc-name">${t(arc.name)}</div>
+        <div class="arc-meta">${t(arc.mat)} // ${arc.discoverer} // ${arc.startDate} → ${arc.endDate} (${days}${t('footer-days')})</div>
+      </div>
+      <div class="arc-tds">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:bold">
+          <span style="color:var(--red)">${arc.startTds}</span>
+          <span style="color:var(--dim)">→</span>
+          <span style="color:var(--green)">${arc.endTds} ppt</span>
+        </div>
+        <div style="font-size:9px;color:var(--green);font-weight:bold;margin-top:3px">↓ ${redu}%</div>
+      </div>
+      <span style="color:var(--dim);font-size:16px">›</span>
+    </div>`;
+            }).join('');
+
+            const succ = archiveData.filter(a => a.outcome === 'success').length;
+            const warn = archiveData.filter(a => a.outcome === 'warning').length;
+            const avgDrop = (archiveData.reduce((acc, a) => acc + (a.startTds - a.endTds), 0) / archiveData.length).toFixed(1);
+            document.getElementById('archive-stats').innerHTML = [
+                { label: t('arc-completed'), val: succ, color: 'var(--green)' },
+                { label: t('arc-warnings'), val: warn, color: 'var(--yellow)' },
+                { label: t('arc-avg-drop'), val: avgDrop + ' ppt', color: 'var(--cyan)' },
+                { label: t('arc-total'), val: archiveData.length, color: 'var(--red)' },
+            ].map(s => `
+    <div style="background:var(--bg2);border:1px solid var(--border);padding:14px">
+      <div style="font-size:8px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;font-weight:bold">${s.label}</div>
+      <div style="font-family:var(--head);font-size:20px;font-weight:900;color:${s.color}">${s.val}</div>
+    </div>`).join('');
+        }
+
+        function openArcDetail(id) {
+            const arc = archiveData.find(x => x.id === id);
+            if (!arc) return;
+            const redu = (((arc.startTds - arc.endTds) / arc.startTds) * 100).toFixed(1);
+            document.getElementById('arc-modal-title').textContent = arc.id + ' // ' + t(arc.name);
+            document.getElementById('arc-modal-body').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <span style="font-size:36px">${arc.img}</span>
+      <div>
+        <div style="font-size:8px;color:var(--dim);text-transform:uppercase">${t('art-mat')}: ${t(arc.mat)} // ${arc.discoverer}</div>
+        <div style="font-size:8px;color:var(--dim)">GPS: ${arc.gps}</div>
+      </div>
+    </div>
+    <div style="background:rgba(0,242,255,0.03);border:1px solid var(--border);padding:12px;margin-bottom:12px;font-size:11px;color:#ccc;line-height:1.5">
+       ${t(arc.history)}
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);padding:14px;margin-bottom:12px">
+      <div style="font-size:8px;color:var(--dim);text-transform:uppercase;margin-bottom:10px">${t('arc-tds-journey')}</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="text-align:center">
+          <div style="font-family:var(--head);font-size:18px;color:var(--red)">${arc.startTds}</div>
+          <div style="font-size:7px;color:var(--dim);text-transform:uppercase">${t('arc-start')}</div>
+        </div>
+        <div style="flex:1;height:6px;background:linear-gradient(to right,var(--red),var(--green))"></div>
+        <div style="text-align:center">
+          <div style="font-family:var(--head);font-size:18px;color:var(--green)">${arc.endTds}</div>
+          <div style="font-size:7px;color:var(--dim);text-transform:uppercase">${t('arc-end')}</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:9px;color:var(--dim);margin-top:8px">
+        ${t('arc-reduction')}: <span style="color:var(--green);font-weight:bold">${redu}%</span>
+      </div>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);padding:12px">
+      <div style="font-size:9px;color:#888;font-style:italic">${t(arc.notes)}</div>
+    </div>`;
+            openModal('arc-modal');
+        }
+
+        // ─── MAP ───────────────────────────────────────────────────────────────────────
+        let leafletMap = null;
+        let mapMarkers = [];
+
+        function parseGPS(s) {
+            const m = s.match(/([\d.]+)°N\s+([\d.]+)°E/);
+            return m ? { lat: parseFloat(m[1]), lon: parseFloat(m[2]) } : null;
+        }
+
+        function renderMap() {
+            const all = [...artifacts, ...archiveData].map(a => ({ ...a, coords: parseGPS(a.gps) })).filter(a => a.coords);
+            document.getElementById('map-count').textContent = all.length + ' ' + t('map-points');
+
+            if (!leafletMap) {
+                leafletMap = L.map('map-view', { zoomControl: false }).setView([42.435, 27.65], 11);
+                L.control.zoom({ position: 'bottomleft' }).addTo(leafletMap);
+
+                // Base Satellite Layer
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: '&copy; Esri, Maxar, Earthstar Geographics, etc.',
+                    maxZoom: 19
+                }).addTo(leafletMap);
+
+                // Labels Overlay (Cities, Villages, Roads)
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+                    maxZoom: 19
+                }).addTo(leafletMap);
+            }
+
+            // Clear existing markers
+            mapMarkers.forEach(m => leafletMap.removeLayer(m));
+            mapMarkers = [];
+            const bounds = [];
+
+            document.getElementById('map-list').innerHTML = all.map(art => {
+                const m = MODES[art.mode];
+                const hl = mapHighlight === art.id;
+
+                // Map Marker marker setup
+                const imgCont = art.photo ? `<img src="${art.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : art.img;
+                const iconHtml = `<div style="background:${m.color};color:#000;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid #fff;box-shadow:0 0 10px ${m.color}">${imgCont}</div>`;
+                const customIcon = L.divIcon({ html: iconHtml, className: '', iconSize: [24, 24], iconAnchor: [12, 12], popupAnchor: [0, -12] });
+
+                const marker = L.marker([art.coords.lat, art.coords.lon], { icon: customIcon }).addTo(leafletMap);
+                const popupContent = `<div style="background:var(--bg);color:#fff;padding:8px;font-family:var(--font);border:1px solid ${m.color}">
+      <strong style="color:${m.color}">${art.id}</strong><br>
+      <b style="font-size:13px">${t(art.name) || art.id}</b><br>
+      <span style="font-size:10px;color:#aaa">${art.gps}</span>
+      ${art.history ? `<div style="margin-top:8px;font-size:10px;line-height:1.4;color:var(--dim);border-top:1px dashed #333;padding-top:6px">${t(art.history)}</div>` : ''}
+    </div>`;
+
+                // Leaflet applies its own styles to popups, we just pack it in
+                marker.bindPopup(popupContent, { closeButton: false, minWidth: 150 });
+
+                if (hl) marker.openPopup();
+                mapMarkers.push(marker);
+                bounds.push([art.coords.lat, art.coords.lon]);
+
+                return `
+    <div style="background:var(--bg2);border:1px solid ${hl ? 'var(--cyan)' : 'var(--border)'};padding:12px;margin-bottom:6px;cursor:pointer;transition:border-color 0.2s"
+      onclick="highlightMap('${art.id}')"
+      onmouseover="this.style.borderColor='rgba(0,242,255,0.3)'"
+      onmouseout="this.style.borderColor='${hl ? 'var(--cyan)' : 'var(--border)'}'">
+      <div style="display:flex;align-items:center;gap:10px">
+        ${art.photo ? `<img src="${art.photo}" style="width:32px;height:32px;object-fit:cover;border-radius:50%">` : `<span style="font-size:22px">${art.img}</span>`}
+        <div>
+          <div style="font-size:8px;font-weight:bold;letter-spacing:0.1em;color:${m.color}">${art.id}</div>
+          <div style="font-size:11px;color:#fff;font-weight:bold">${t(art.name) || art.id}</div>
+          <div style="font-size:8px;color:var(--dim);font-family:'Share Tech Mono',monospace">${art.gps}</div>
+        </div>
+      </div>
+    </div>`;
+            }).join('');
+
+            if (mapHighlight) {
+                const target = all.find(x => x.id === mapHighlight);
+                if (target) leafletMap.setView([target.coords.lat, target.coords.lon], 18, { animate: true });
+            } else if (bounds.length) {
+                leafletMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 10 });
+            }
+
+            // Customizing default leaflet popup styles slightly
+            const style = document.createElement('style');
+            style.innerHTML = `
+    .leaflet-popup-content-wrapper { background: #0c0c14; border-radius: 4px; padding: 0; overflow: hidden; }
+    .leaflet-popup-tip { background: #0c0c14; }
+    .leaflet-popup-content { margin: 0; }
+  `;
+            document.head.appendChild(style);
+        }
+
+        function highlightMap(id) {
+            mapHighlight = mapHighlight === id ? null : id;
+            renderMap();
+        }
+
+        // ─── SETTINGS ──────────────────────────────────────────────────────────────────
+        function renderMatrix() {
+            const mnames = getModeNames();
+            document.getElementById('matrix-table').innerHTML = Object.entries(MODES).map(([k, m]) => `
+    <tr style="${k === activeMode ? 'background:var(--border)' : ''}">
+      <td><span style="font-weight:bold;color:${m.color}">${m.icon} ${mnames[k]?.name || k}</span></td>
+      <td class="center" style="color:#888">${m.mix}</td>
+      <td class="center" style="color:var(--cyan)">${m.target} ppt</td>
+      <td class="center" style="color:#888">${m.cycle}d</td>
+      <td class="center">
+        ${k === activeMode
+                    ? `<span style="color:var(--green);font-size:8px;font-weight:bold">${t('matrix-active')}</span>`
+                    : `<span style="color:var(--dim);font-size:8px">${t('matrix-standby')}</span>`}
+      </td>
+    </tr>`).join('');
+        }
+
+        function renderSysInfo() {
+            const items = [
+                { label: t('sys-version'), val: 'v1.0' },
+                { label: t('sys-operator'), val: operatorId || 'N/A' },
+                { label: 'MCU', val: 'ESP8266' },
+                { label: 'EC Sensor', val: 'DFRobot' },
+                { label: 'Temp', val: 'DS18B20' },
+                { label: t('sys-protocol'), val: 'WebSocket' },
+                { label: 'AI', val: 'None' },
+                { label: 'Deploy', val: 'Vercel' },
+            ];
+            document.getElementById('sys-info').innerHTML = items.map(i => `
+    <div style="background:var(--bg3);border:1px solid var(--border);padding:10px">
+      <div style="font-size:7px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px">${i.label}</div>
+      <div style="font-size:10px;color:#fff;font-weight:bold">${i.val}</div>
+    </div>`).join('');
+        }
+
+        // ─── NAVIGATION ────────────────────────────────────────────────────────────────
+        function showPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('page-' + id).classList.add('active');
+            const btns = document.querySelectorAll('.nav-btn');
+            const pages = ['dashboard', 'discovery', 'archive', 'reports', 'map', 'settings'];
+            btns[pages.indexOf(id)]?.classList.add('active');
+            const navMap = { dashboard: 'nav-dashboard', discovery: 'nav-discovery', archive: 'nav-archive', reports: 'nav-reports', map: 'nav-map', settings: 'nav-settings' };
+            document.getElementById('header-title').textContent = 'ASOA // ' + t(navMap[id] || 'nav-dashboard');
+            if (id === 'map') {
+                if (leafletMap) setTimeout(() => { leafletMap.invalidateSize(); renderMap(); }, 150);
+                else setTimeout(() => renderMap(), 50);
+            }
+            if (id === 'reports') { updateReportTable(); renderReportArtifacts(); }
+            if (id === 'settings') { renderSysInfo(); renderMatrix(); }
+        }
+
+        // ─── MODALS ─────────────────────────────────────────────────────────────────────
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+        document.querySelectorAll('.modal-overlay').forEach(m => {
+            m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+        });
+
+        setInterval(() => {
+            const c = document.getElementById('live-clock');
+            if (c) c.textContent = new Date().toLocaleTimeString('bg-BG');
+        }, 1000);
+
+        // ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+        let notificationEmail = localStorage.getItem('asoa_notification_email') || '';
+        let lastNotificationTimes = {};
+
+        const NotificationManager = {
+            send: function (subject, body) {
+                if (!notificationEmail) {
+                    console.log('Notification suppressed: No email set.');
+                    return;
+                }
+
+                const now = Date.now();
+                const isTest = subject === t('notif-test-sub');
+                const cooldown = isTest ? 0 : 1000 * 60; // 1 minute cooldown for real alerts, 0 for tests
+
+                if (!isTest && lastNotificationTimes[subject] && (now - lastNotificationTimes[subject] < cooldown)) {
+                    console.log(`Notification for ${subject} suppressed (cooldown).`);
+                    return;
+                }
+
+                lastNotificationTimes[subject] = now;
+
+                const params = {
+                    to_email: notificationEmail,
+                    subject: subject,
+                    message: body,
+                    timestamp: new Date().toLocaleString()
+                };
+
+                console.log(`[Notification] Sending to ${notificationEmail}: ${subject}`);
+
+                emailjs.send('service_jekyohp', 'template_i9255vp', params, 'vGXwCXxC-2FG2YLXb')
+                    .then(() => showToast(t('notif-success-msg'), 'success'))
+                    .catch((err) => console.error('EmailJS Error:', err));
+            }
+        };
+
+        function saveNotificationConfig() {
+            const email = document.getElementById('notif-email-input').value.trim();
+            if (!email || !email.includes('@')) {
+                showToast('notif-err-invalid', 'error');
+                return;
+            }
+            notificationEmail = email;
+            localStorage.setItem('asoa_notification_email', email);
+            showToast('notif-success-save', 'success');
+        }
+
+        function sendTestNotification() {
+            if (!notificationEmail) {
+                showToast('notif-warn-no-email', 'warning');
+                return;
+            }
+            NotificationManager.send(t('notif-test-sub'), t('notif-test-body'));
+            showToast('notif-info-test', 'info');
+        }
+
+        // Initialize EmailJS
+        emailjs.init('vGXwCXxC-2FG2YLXb');
+
+        // Apply initial translations
+    </script>
+    <div id="toast-container"></div>
+</body>
+
+</html>
