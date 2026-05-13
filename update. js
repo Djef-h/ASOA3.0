@@ -1,0 +1,7 @@
+export default function handler(req, res) {
+  if (req.method === 'POST') {
+    console.log("Данни получени:", req.body);
+    return res.status(200).json({ status: "success", data: req.body });
+  }
+  return res.status(404).json({ status: "not found" });
+}
